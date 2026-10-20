@@ -105,9 +105,9 @@ function App() {
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <img 
-                  src="https://aws-us-east-1.abacusaicdn.net/provider_inputs/122750/1957f969-809e-4afa-a0bf-a17b60ae2515.png?Expires=1792505067&Signature=MEUCIQDAFOCUK-b97kZ-ImJXWXyqJQekyh96q2LDd6DoEcGtGwIgEtLmDHD~TuDhxlRGk4HxO7iBspoYFidXsY1XMufqTQI_&Key-Pair-Id=K2V7TD7QADOFFR" 
-                  alt="Bryant Car Club Logo" 
+                <img
+                  src="images/logo.png"
+                  alt="Bryant Car Club Logo"
                   className="h-12 w-12"
                 />
                 <div>
@@ -148,10 +148,10 @@ function App() {
 
       {/* Hero Section */}
       <section className="relative bg-black text-white">
-        <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 opacity-30">
           <img
-            src="https://aws-us-east-1.abacusaicdn.net/provider_inputs/122750/a08070fd-f6ca-4edc-a6a9-98157f794761.png?Expires=1792505064&Signature=MEUCIGJcJJqn33eQ6p~RnERdKiSG~g5fRfMMns9zERHrd7YgAiEAg8n~z1K8sBNcI1OEdjipwiUaiyTnU2fW2g0j9vSKvbQ_&Key-Pair-Id=K2V7TD7QADOFFR"
-            alt="Bryant University Car Club banner with classic and exotic cars"
+            src="https://hips.hearstapps.com/autoweek/assets/s3fs-public/car-show11-min.jpg"
+            alt="Classic cars displayed on university campus lawn"
             className="w-full h-full object-cover"
           />
         </div>
@@ -203,8 +203,8 @@ function App() {
             </div>
             <div>
               <img
-                src="https://upload.wikimedia.org/wikipedia/commons/0/0f/DeLorean_Replica_Kovacs_Time_Machine.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original"
-                alt="Vintage automobile on display at outdoor university event"
+                src="images/banner.png"
+                alt="Bryant University Car Club banner featuring classic muscle car, exotic supercar, and modern sports car"
                 className="w-full h-auto border border-neutral-200"
               />
             </div>
@@ -459,7 +459,7 @@ function App() {
               <div className="text-center py-12">
                 <i className="fa-solid fa-circle-check text-6xl mb-6" style={{ color: '#826E38' }}></i>
                 <h3 className="text-2xl font-bold text-black mb-2">Inquiry Submitted!</h3>
-                <p className="text-neutral-600">Thank you for your interest. Our team will contact you shortly.</p>
+                <p className="text-neutral-600">Thank you for your interest. We'll contact you soon to discuss partnership opportunities.</p>
               </div>
             ) : (
               <form onSubmit={handleSponsorSubmit} className="space-y-6">
@@ -498,33 +498,32 @@ function App() {
                     />
                   </div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={sponsorData.phone}
-                      onChange={handleSponsorInputChange}
-                      className="w-full px-4 py-3 border border-neutral-300 focus:outline-none focus:border-black"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-black mb-2">Sponsorship Level</label>
-                    <select
-                      name="sponsorshipLevel"
-                      value={sponsorData.sponsorshipLevel}
-                      onChange={handleSponsorInputChange}
-                      className="w-full px-4 py-3 border border-neutral-300 focus:outline-none focus:border-black"
-                    >
-                      <option value="">Select level</option>
-                      <option value="platinum">Platinum Sponsor</option>
-                      <option value="gold">Gold Sponsor</option>
-                      <option value="silver">Silver Sponsor</option>
-                      <option value="bronze">Bronze Sponsor</option>
-                      <option value="other">Other/Inquire</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Phone</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={sponsorData.phone}
+                    onChange={handleSponsorInputChange}
+                    className="w-full px-4 py-3 border border-neutral-300 focus:outline-none focus:border-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Sponsorship Level of Interest</label>
+                  <select
+                    name="sponsorshipLevel"
+                    value={sponsorData.sponsorshipLevel}
+                    onChange={handleSponsorInputChange}
+                    className="w-full px-4 py-3 border border-neutral-300 focus:outline-none focus:border-black"
+                  >
+                    <option value="">Select a level</option>
+                    <option value="platinum">Platinum Sponsor</option>
+                    <option value="gold">Gold Sponsor</option>
+                    <option value="silver">Silver Sponsor</option>
+                    <option value="bronze">Bronze Sponsor</option>
+                    <option value="inkind">In-Kind Donation</option>
+                    <option value="other">Other/Discuss</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Message</label>
@@ -533,6 +532,7 @@ function App() {
                     value={sponsorData.message}
                     onChange={handleSponsorInputChange}
                     rows="4"
+                    placeholder="Tell us about your company and sponsorship interests..."
                     className="w-full px-4 py-3 border border-neutral-300 focus:outline-none focus:border-black"
                   ></textarea>
                 </div>
@@ -550,49 +550,41 @@ function App() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-12 border-t border-neutral-800">
+      <footer className="bg-black text-white py-16 border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid md:grid-cols-3 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img 
-                  src="https://aws-us-east-1.abacusaicdn.net/provider_inputs/122750/1957f969-809e-4afa-a0bf-a17b60ae2515.png?Expires=1792505067&Signature=MEUCIQDAFOCUK-b97kZ-ImJXWXyqJQekyh96q2LDd6DoEcGtGwIgEtLmDHD~TuDhxlRGk4HxO7iBspoYFidXsY1XMufqTQI_&Key-Pair-Id=K2V7TD7QADOFFR" 
-                  alt="Bryant Car Club Logo" 
-                  className="h-10 w-10"
+                <img
+                  src="images/logo.png"
+                  alt="Bryant Car Club Logo"
+                  className="h-12 w-12"
                 />
                 <div>
                   <div className="font-bold">Bryant University</div>
-                  <div className="text-xs" style={{ color: '#826E38' }}>Car Show 2027</div>
+                  <div className="text-xs uppercase tracking-widest" style={{ color: '#826E38' }}>Car Club</div>
                 </div>
               </div>
-              <p className="text-sm text-neutral-400 leading-relaxed">Celebrating automotive excellence and community engagement at Bryant University.</p>
+              <p className="text-sm text-neutral-400 leading-relaxed">Celebrating automotive excellence and bringing together the Bryant community through our shared passion for cars.</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4 text-sm uppercase tracking-widest">Event Info</h4>
+              <h3 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: '#826E38' }}>Contact</h3>
               <div className="space-y-2 text-sm text-neutral-400">
-                <p>Coming Soon - April 2027</p>
-                <p>Bryant University Campus</p>
+                <p>Bryant University</p>
+                <p>1150 Douglas Pike</p>
                 <p>Smithfield, RI 02917</p>
               </div>
             </div>
             <div>
-              <h4 className="font-semibold mb-4 text-sm uppercase tracking-widest">Connect</h4>
+              <h3 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: '#826E38' }}>Connect</h3>
               <div className="space-y-2 text-sm text-neutral-400">
-                <p>Instagram: @bryantcarclun2026</p>
                 <p>Email: carshow@bryant.edu</p>
-                <div className="flex gap-4 mt-4">
-                  <a href="#" className="hover:text-white transition-colors">
-                    <i className="fa-brands fa-instagram text-xl"></i>
-                  </a>
-                  <a href="#" className="hover:text-white transition-colors">
-                    <i className="fa-brands fa-facebook text-xl"></i>
-                  </a>
-                </div>
+                <p>Instagram: <a href="https://instagram.com/bryantcarclub2026" target="_blank" rel="noopener noreferrer" className="hover:text-white">@bryantcarclub2026</a></p>
               </div>
             </div>
           </div>
           <div className="border-t border-neutral-800 pt-8 text-center text-sm text-neutral-500">
-            <p>© 2027 Bryant University Car Club. Est. 2026. All rights reserved.</p>
+            <p>&copy; 2027 Bryant University Car Club. Est. 2026. All rights reserved.</p>
           </div>
         </div>
       </footer>
