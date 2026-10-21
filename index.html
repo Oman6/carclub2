@@ -1,36 +1,258 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-black">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Bryant University Car Show 2027</title>
-    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <meta name="description" content="Bryant University Car Show 2027. Coming Soon - April 2027 at Bryant University Campus, Smithfield, RI. Register your vehicle or become a sponsor.">
+    <meta name="theme-color" content="#000000">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='black' stroke='%23B39A5A' stroke-width='2'/%3E%3Ctext x='32' y='43' font-family='Arial' font-weight='700' font-size='30' fill='%23B39A5A' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Bryant University Car Show 2027">
+    <meta property="og:description" content="Bryant University Car Show 2027. Coming Soon - April 2027 at Bryant University Campus, Smithfield, RI. Register your vehicle or become a sponsor.">
+    <meta property="og:image" content="https://hips.hearstapps.com/autoweek/assets/s3fs-public/car-show11-min.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bryant University Car Show 2027">
+    <meta name="twitter:description" content="Coming Soon - April 2027 at Bryant University Campus, Smithfield, RI. Register your vehicle or become a sponsor.">
+    <meta name="twitter:image" content="https://hips.hearstapps.com/autoweek/assets/s3fs-public/car-show11-min.jpg">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://hips.hearstapps.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    colors: {
+                        bryant: {
+                            black: '#000000',
+                            carbon: '#0A0A0A',
+                            graphite: '#141414',
+                            'line-dark': 'rgba(255,255,255,0.12)',
+                            mist: '#A3A3A3',
+                            smoke: '#D4D4D4',
+                            gold: '#826E38',
+                            'gold-light': '#B39A5A',
+                            'gold-pale': '#D9C9A0',
+                            'gold-deep': '#6B5A2D',
+                            'gold-tint': '#FAF7EF',
+                            bone: '#F5F3EE',
+                            paper: '#FFFFFF',
+                            ink: '#0A0A0A',
+                            stone: '#5C5C5C',
+                            'line-light': '#E7E4DC',
+                            'input-line': '#CFCAC0',
+                            'control-line': '#8C8679',
+                            signal: '#E5484D'
+                        }
+                    },
                     fontFamily: {
-                        inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+                        display: ['"Inter Tight"', 'Inter', 'system-ui', 'sans-serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+                        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace']
+                    },
+                    transitionTimingFunction: {
+                        lux: 'cubic-bezier(.2,.7,.2,1)',
+                        snap: 'cubic-bezier(.4,0,.2,1)'
                     }
                 }
             }
         };
     </script>
     <style>
-        h1, h2, h3, h4, h5, h6 {
-            color: inherit;
+        :root {
+            --black: #000000; --carbon: #0A0A0A; --graphite: #141414;
+            --line-dark: rgba(255,255,255,0.12);
+            --mist: #A3A3A3; --smoke: #D4D4D4;
+            --gold: #826E38; --gold-light: #B39A5A; --gold-pale: #D9C9A0; --gold-deep: #6B5A2D; --gold-tint: #FAF7EF;
+            --bone: #F5F3EE; --paper: #FFFFFF; --ink: #0A0A0A; --stone: #5C5C5C;
+            --line-light: #E7E4DC; --input-line: #CFCAC0; --control-line: #8C8679; --signal: #E5484D; --error-text: #C8333A;
+            --lux: cubic-bezier(.2,.7,.2,1);
+            --snap: cubic-bezier(.4,0,.2,1);
+        }
+
+        html {
+            background: #000;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            scroll-padding-top: 88px;
+            overflow-x: clip;
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            html { scroll-behavior: smooth; }
+        }
+        body {
+            margin: 0;
+            background: #000;
+            overflow-x: clip;
+            font-family: Inter, system-ui, sans-serif;
+            font-size: 17px;
+            line-height: 1.65;
+        }
+        h1, h2, h3, h4, h5, h6 { color: inherit; text-wrap: balance; }
+        p { text-wrap: pretty; }
+        main:focus { outline: none; }
+
+        ::selection { background: var(--gold-pale); color: #000; }
+        *:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+        .on-light *:focus-visible { outline-color: var(--gold); }
+        .on-light { color-scheme: light; }
+
+        /* Layout */
+        .wrap { width: 100%; max-width: 1280px; margin-left: auto; margin-right: auto; padding-left: 16px; padding-right: 16px; }
+        @media (min-width: 640px) { .wrap { padding-left: 32px; padding-right: 32px; } }
+        @media (min-width: 1024px) { .wrap { padding-left: 48px; padding-right: 48px; } }
+
+        /* Type scale */
+        .t-h1 { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 600; font-size: clamp(3rem, 9vw, 9rem); line-height: .92; letter-spacing: -0.045em; }
+        @media (max-width: 389px) { .t-h1 { font-size: 12.4vw; } }
+        .t-h2 { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 600; font-size: clamp(2.25rem, 5.5vw, 5rem); line-height: 1; letter-spacing: -0.035em; text-wrap: balance; }
+        .t-h3 { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 500; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15; letter-spacing: -0.02em; }
+        .t-stat { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 300; font-size: clamp(3rem, 7vw, 6rem); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+        .t-lead { font-family: Inter, system-ui, sans-serif; font-weight: 400; font-size: 1.25rem; line-height: 1.5; max-width: 56ch; text-wrap: pretty; }
+        @media (min-width: 768px) { .t-lead { font-size: 1.5rem; } }
+        .t-eyebrow { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .16em; }
+        .t-mono-label { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .14em; }
+        .t-time { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 13px; letter-spacing: .08em; }
+        .serif-accent { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; letter-spacing: -0.02em; padding-right: .04em; }
+        .prose-62 { max-width: 62ch; }
+
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 0; font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: -0.005em; line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 250ms var(--snap), border-color 250ms var(--snap), color 200ms var(--snap), transform 150ms var(--snap); }
+        .btn:active { transform: scale(.98); }
+        .btn .arrow { transition: transform 250ms var(--snap); }
+        .btn:hover .arrow { transform: translateX(4px); }
+        .btn-gold { background: var(--gold); color: #fff; }
+        .btn-gold:hover { background: var(--gold-deep); }
+        .btn-ghost { border: 1px solid rgba(255,255,255,.28); color: #fff; }
+        .btn-ghost:hover { border-color: #fff; background: rgba(255,255,255,.05); }
+        .btn-black { background: #000; color: #fff; }
+        .btn-black:hover { background: var(--gold); }
+        .btn[disabled] { cursor: progress; }
+        .btn[disabled]:hover { background: #000; }
+        .btn[disabled]:active { transform: none; }
+
+        /* Underline sweep for text links */
+        .u-link { position: relative; display: inline-flex; align-items: center; }
+        .u-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform 250ms var(--snap); }
+        .u-link:hover::after, .u-link:focus-visible::after { transform: scaleX(1); }
+        .u-static { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+        /* Nav links */
+        .nav-link { position: relative; color: var(--smoke); transition: color 200ms var(--snap); }
+        .nav-link:hover, .nav-link[aria-current="true"] { color: #fff; }
+        .nav-link .nav-u { position: absolute; left: 0; right: 0; bottom: -6px; height: 1px; background: var(--gold-light); transform: scaleX(0); transform-origin: left; transition: transform 250ms var(--snap); }
+        .nav-link:hover .nav-u, .nav-link[aria-current="true"] .nav-u { transform: scaleX(1); }
+
+        /* Keyframes */
+        @keyframes heroSettle { from { transform: scale(1.08); } to { transform: scale(1); } }
+        @keyframes riseIn { from { transform: translateY(105%); } to { transform: translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulseDot { 0% { box-shadow: 0 0 0 0 rgba(179,154,90,.6); } 100% { box-shadow: 0 0 0 8px rgba(179,154,90,0); } }
+        @keyframes drawCheck { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
+        @keyframes flash { from { background: var(--gold-pale); } to { background: var(--gold-tint); } }
+        @keyframes successIn { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: none; } }
+
+        .hero-img { animation: heroSettle 2400ms var(--lux) both; transform-origin: 60% 40%; filter: saturate(.85) contrast(1.05); opacity: .7; }
+        .line-mask { display: block; overflow: hidden; padding-bottom: .12em; margin-bottom: -.12em; }
+        .rise { display: block; animation: riseIn 900ms var(--lux) both; }
+        .fade-up { animation: fadeUp 700ms var(--lux) both; }
+        .pulse-dot { animation: pulseDot 2.4s var(--snap) infinite; }
+        .menu-in { animation: fadeIn 250ms var(--snap) both; }
+        .menu-item { animation: fadeUp 500ms var(--lux) both; }
+        .success-in { animation: successIn 400ms var(--lux) both; }
+        .check-circle { --len: 189; stroke-dasharray: 189; stroke-dashoffset: 189; animation: drawCheck 700ms var(--lux) forwards; }
+        .check-mark { --len: 40; stroke-dasharray: 40; stroke-dashoffset: 40; animation: drawCheck 400ms var(--lux) 300ms forwards; }
+
+        /* Reveal */
+        .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s var(--lux), transform .7s var(--lux); }
+        .reveal.is-in { opacity: 1; transform: none; }
+        .draw-x { transform: scaleX(0); transform-origin: left; transition: transform .8s var(--lux) .2s; }
+        .is-in .draw-x { transform: scaleX(1); }
+        .banner-img { transform: scale(1.06); transition: transform 1200ms var(--lux); }
+        .banner-img.is-in { transform: scale(1); }
+
+        /* Ground rules */
+        .rule-cell { transition: background-color 200ms var(--snap); }
+        .rule-cell:hover { background: var(--graphite); }
+        .strike { position: absolute; left: 0; top: 55%; height: 2px; width: 100%; background: var(--gold-light); opacity: .4; transform: scaleX(1); transform-origin: left; transition: opacity 300ms var(--snap), transform 400ms var(--lux); }
+        .rule-cell:hover .strike { opacity: 1; }
+        .reveal:not(.is-in) .strike { transform: scaleX(0); }
+
+        /* Timeline */
+        .tl-fill { transform: scaleY(0); transform-origin: top; will-change: transform; }
+        .tl-node { background: #fff; border: 1px solid var(--input-line); transition: background-color 300ms var(--snap), border-color 300ms var(--snap), box-shadow 300ms var(--snap); }
+        .tl-node.is-lit { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 4px rgba(130,110,56,.15); }
+        .tl-name { transition: transform 300ms var(--snap); }
+        .tl-row:hover .tl-name { transform: translateX(6px); }
+
+        /* Categories */
+        .cat-row:focus-visible { outline-offset: -2px; }
+        .cat-name { color: var(--smoke); transition: color 200ms var(--snap); }
+        .cat-row:hover .cat-name, .cat-row:focus-visible .cat-name { color: #fff; }
+        .cat-icons { opacity: 0; transform: translateX(-8px); transition: opacity 300ms var(--snap), transform 300ms var(--snap); }
+        .cat-row:hover .cat-icons, .cat-row:focus-visible .cat-icons { opacity: 1; transform: none; }
+        .cat-hint { opacity: 0; transition: opacity 300ms var(--snap); }
+        .cat-row:hover .cat-hint, .cat-row:focus-visible .cat-hint { opacity: 1; }
+        .cat-sweep { transform: scaleX(0); transform-origin: left; transition: transform 500ms var(--lux); }
+        .cat-row:hover .cat-sweep, .cat-row:focus-visible .cat-sweep { transform: scaleX(1); }
+
+        /* Forms */
+        .f-label { display: block; font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .14em; color: var(--stone); margin-bottom: 4px; }
+        @media (min-width: 768px) { .t-eyebrow, .t-mono-label, .f-label { font-size: 13px; } }
+        .field { display: block; width: 100%; height: 44px; padding: 0; background: transparent; color: var(--ink); font-family: Inter, system-ui, sans-serif; font-size: 16px; border: 0; border-bottom: 1px solid var(--control-line); border-radius: 0; -webkit-appearance: none; appearance: none; transition: border-color 200ms var(--snap), box-shadow 200ms var(--snap); }
+        .field-area { height: auto; min-height: 120px; padding-top: 12px; padding-bottom: 12px; resize: vertical; line-height: 1.5; }
+        .field::placeholder { color: #767676; opacity: 1; }
+        .field:focus { border-bottom-color: var(--gold); box-shadow: inset 0 -1px 0 var(--gold); }
+        .field:focus, .field:focus-visible { outline: none; }
+        .field-wrap:focus-within .f-label { color: var(--gold-deep); }
+        .err { display: none; margin-top: 6px; font-size: 13px; line-height: 1.4; color: var(--error-text); }
+        .field:user-invalid { border-bottom-color: var(--error-text); }
+        .field:user-invalid + .err { display: block; }
+        .choice-group:has(input:user-invalid) > .err { display: block; }
+        .radio-card:has(input:user-invalid) { border-color: var(--error-text); }
+
+        .radio-card { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 10px 16px; border: 1px solid var(--control-line); background: #fff; color: var(--ink); font-size: 15px; line-height: 1.2; cursor: pointer; transition: border-color 200ms var(--snap), background-color 200ms var(--snap); }
+        .radio-card:hover { border-color: var(--ink); }
+        .radio-card.is-checked { border-color: var(--gold); background: var(--gold-tint); }
+        .radio-card:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 3px; }
+        .radio-card .flash-layer { position: absolute; inset: 0; pointer-events: none; animation: flash 600ms var(--snap) both; }
+        .radio-card > .rc-content { position: relative; }
+
+        /* Footer wordmark (SVG, sized to its container) */
+        .wordmark { display: block; width: 100%; height: auto; overflow: visible; }
+        .wordmark text { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 700; letter-spacing: -0.025em; }
+
+        /* Image band */
+        .band-img { filter: grayscale(.35) contrast(1.05) saturate(.8); }
+
+        /* Boot screen (replaced by React) */
+        .boot { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; justify-content: center; background: #000; }
+        .boot-mark { width: 56px; height: 56px; border-radius: 9999px; border: 1px solid #B39A5A; display: flex; align-items: center; justify-content: center; font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 600; font-size: 25px; color: #B39A5A; animation: fadeIn 600ms ease both; }
+
+        @media print {
+            .reveal { opacity: 1 !important; transform: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+            .reveal { opacity: 1 !important; transform: none !important; }
         }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-black text-white antialiased">
+    <div id="root"><div class="boot" aria-label="Loading"><div class="boot-mark">B</div></div></div>
+    <noscript><p style="color:#fff;text-align:center;padding:24px;font-family:Inter,system-ui,sans-serif">This site requires JavaScript.</p></noscript>
     <script type="text/babel" src="app.js"></script>
 </body>
 </html>
