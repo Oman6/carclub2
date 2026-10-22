@@ -14,39 +14,54 @@ const EVENT_DATE = 'Coming Soon - April 2027';
 const ADDRESS_FULL = 'Bryant University Campus, 1150 Douglas Pike, Smithfield, RI 02917';
 const ADMISSION = 'Free for Bryant students and staff, $5 general admission';
 
+// gap = time since the previous event (timing-tower "interval")
 const schedule = [
-  { time: '9:00 AM', event: 'Registration Opens', detail: 'Check-in for registered participants' },
-  { time: '10:00 AM', event: 'Gates Open to Public', detail: 'General admission begins' },
-  { time: '12:30 PM', event: 'Food & Refreshments', detail: 'Lunch available from local vendors' },
-  { time: '3:30 PM', event: 'Event Concludes', detail: 'Thank you for attending' }
+  { time: '9:00 AM', code: 'REG', event: 'Registration Opens', detail: 'Check-in for registered participants', gap: 'Start' },
+  { time: '10:00 AM', code: 'GTS', event: 'Gates Open to Public', detail: 'General admission begins', gap: '+1:00' },
+  { time: '12:30 PM', code: 'EAT', event: 'Food & Refreshments', detail: 'Lunch available from local vendors', gap: '+2:30' },
+  { time: '3:30 PM', code: 'FIN', event: 'Event Concludes', detail: 'Thank you for attending', gap: '+3:00' }
+];
+
+// minutes between the schedule's times: 60 + 150 + 180 = 6 h 30 min
+const sectors = [
+  { n: 'S1', label: 'Registration', span: '9:00–10:00 AM', mins: 60, bg: '#B39A5A', fg: '#0A0A0A' },
+  { n: 'S2', label: 'Gates open', span: '10:00 AM–12:30 PM', mins: 150, bg: '#8C7A48', fg: '#0A0A0A' },
+  { n: 'S3', label: 'Food & refreshments → finish', span: '12:30–3:30 PM', mins: 180, bg: '#3A3427', fg: '#F2EEE4' }
 ];
 
 const categories = [
-  { name: 'Classic Cars', description: 'Vehicles manufactured 1900-1979', icon: 'fa-car-side', value: 'classic' },
-  { name: 'Muscle Cars', description: 'High-performance American V8 vehicles', icon: 'fa-gauge-high', value: 'muscle' },
-  { name: 'Exotic & Luxury', description: 'Premium and rare automobiles', icon: 'fa-gem', value: 'exotic' },
-  { name: 'Modern Performance', description: 'Contemporary sports and performance cars', icon: 'fa-bolt', value: 'modern' },
-  { name: 'Motorcycles', description: 'Sport bikes, cruisers, and custom motorcycles', icon: 'fa-motorcycle', value: 'motorcycles' },
-  { name: 'Custom & Modified', description: 'Customized and modified vehicles', icon: 'fa-wrench', value: 'custom' },
-  { name: 'Electric & Alternative', description: 'Electric and alternative fuel vehicles', icon: 'fa-leaf', value: 'electric' }
+  { name: 'Classic Cars', description: 'Vehicles manufactured 1900-1979', code: 'CLASSIC', value: 'classic' },
+  { name: 'Muscle Cars', description: 'High-performance American V8 vehicles', code: 'MUSCLE', value: 'muscle' },
+  { name: 'Exotic & Luxury', description: 'Premium and rare automobiles', code: 'EXOTIC', value: 'exotic' },
+  { name: 'Modern Performance', description: 'Contemporary sports and performance cars', code: 'MODERN', value: 'modern' },
+  { name: 'Motorcycles', description: 'Sport bikes, cruisers, and custom motorcycles', code: 'MOTO', value: 'motorcycles' },
+  { name: 'Custom & Modified', description: 'Customized and modified vehicles', code: 'CUSTOM', value: 'custom' },
+  { name: 'Electric & Alternative', description: 'Electric and alternative fuel vehicles', code: 'ELECTRC', value: 'electric' }
 ];
 
-const stats = [
-  { display: '150+', value: 150, suffix: '+', label: 'Vehicles Expected' },
-  { display: '500+', value: 500, suffix: '+', label: 'Attendees' },
-  { display: '7', value: 7, suffix: '', label: 'Vehicle Categories' },
-  { display: 'Free', value: null, suffix: '', label: 'For Bryant Students' }
+const rules = [
+  { name: 'Donuts', label: 'No donuts', icon: 'donuts' },
+  { name: 'Burnouts', label: 'No burnouts', icon: 'burnouts' },
+  { name: 'Drag Racing', label: 'No drag racing', icon: 'drag' },
+  { name: 'Excessive Revving', label: 'No excessive revving', icon: 'revving' },
+  { name: 'Loud Music', label: 'No loud music', icon: 'music' },
+  { name: 'Drugs and Alcohol', label: 'No drugs or alcohol', icon: 'drugs' }
 ];
-
-const rules = ['Donuts', 'Burnouts', 'Drag Racing', 'Excessive Revving', 'Loud Music', 'Drugs and Alcohol'];
 
 const sponsorLevels = [
-  { label: 'Platinum Sponsor', value: 'platinum' },
-  { label: 'Gold Sponsor', value: 'gold' },
-  { label: 'Silver Sponsor', value: 'silver' },
-  { label: 'Bronze Sponsor', value: 'bronze' },
-  { label: 'In-Kind Donation', value: 'inkind' },
-  { label: 'Other/Discuss', value: 'other' }
+  { label: 'Platinum Sponsor', short: 'Platinum', value: 'platinum' },
+  { label: 'Gold Sponsor', short: 'Gold', value: 'gold' },
+  { label: 'Silver Sponsor', short: 'Silver', value: 'silver' },
+  { label: 'Bronze Sponsor', short: 'Bronze', value: 'bronze' },
+  { label: 'In-Kind Donation', short: 'In-Kind', value: 'inkind' },
+  { label: 'Other/Discuss', short: 'Other', value: 'other' }
+];
+
+const HERO_FACTS = [
+  { k: 'Registration', v: '9:00 AM', num: true },
+  { k: 'Gates open', v: '10:00 AM', num: true },
+  { k: 'Location', v: 'Bryant University Campus, Smithfield, RI' },
+  { k: 'Admission', v: 'Free for Bryant students & staff · $5 general' }
 ];
 
 const NAV_LINKS = [
@@ -245,6 +260,22 @@ function useSubmitFlow(onReset) {
   return [status, submit, finishNow];
 }
 
+// After a submitted form resets, put focus back on its first field (unless focus moved elsewhere).
+function useRefocusAfterReset(status, firstId) {
+  const wasDone = useRef(false);
+  useEffect(() => {
+    if (status === 'done') wasDone.current = true;
+    if (status === 'idle' && wasDone.current) {
+      wasDone.current = false;
+      const active = document.activeElement;
+      if (!active || active === document.body) {
+        const first = document.getElementById(firstId);
+        if (first) first.focus({ preventScroll: true });
+      }
+    }
+  }, [status]);
+}
+
 function scrollToId(id) {
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' });
@@ -268,8 +299,8 @@ function Monogram({ size = 40 }) {
   return (
     <span
       aria-hidden="true"
-      className="inline-flex flex-none items-center justify-center rounded-full border border-bryant-gold-light bg-black font-display font-semibold text-bryant-gold-light"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.45), lineHeight: 1 }}
+      className="inline-flex flex-none items-center justify-center rounded-full border-2 border-bryant-gold-light bg-black font-extrabold italic text-bryant-gold-light"
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.44), lineHeight: 1 }}
     >
       B
     </span>
@@ -294,35 +325,43 @@ function Reveal({ as: Tag = 'div', delay = 0, className = '', style, children, .
 function Eyebrow({ index, children, tone = 'dark', className = '' }) {
   const color = tone === 'light' ? 'text-bryant-gold-deep' : 'text-bryant-gold-light';
   return (
-    <p className={`t-eyebrow ${color} ${className}`}>
+    <p className={`t-label ${color} ${className}`}>
       {index} <span aria-hidden="true">—</span> {children}
     </p>
   );
 }
 
-function ArrowIcon({ className = '' }) {
-  return <i className={`fa-solid fa-arrow-right arrow text-[12px] ${className}`} aria-hidden="true"></i>;
+function Arrow({ className = '' }) {
+  return (
+    <svg className={`arrow flex-none ${className}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true" focusable="false">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function Required() {
+  return (
+    <React.Fragment>
+      <span className="text-bryant-gold-light" aria-hidden="true">&nbsp;*</span>
+      <span className="sr-only"> (required)</span>
+    </React.Fragment>
+  );
 }
 
 function Field({ id, label, required = false, textarea = false, errMsg, className = '', ...input }) {
   const errId = `${id}-err`;
   const Comp = textarea ? 'textarea' : 'input';
   return (
-    <div className={`field-wrap ${className}`}>
-      <label htmlFor={id} className="f-label">
+    <div className={`fld-wrap ${className}`}>
+      <label htmlFor={id} className="lbl">
         {label}
-        {required && (
-          <React.Fragment>
-            <span className="text-bryant-gold-deep" aria-hidden="true">&nbsp;*</span>
-            <span className="sr-only"> (required)</span>
-          </React.Fragment>
-        )}
+        {required && <Required />}
       </label>
       <Comp
         id={id}
         required={required}
         aria-describedby={required ? errId : undefined}
-        className={`field ${textarea ? 'field-area' : ''}`}
+        className={`fld ${textarea ? 'fld-area' : ''}`}
         {...input}
       />
       {required && <p className="err" id={errId}>{errMsg || 'Please fill out this field.'}</p>}
@@ -330,40 +369,36 @@ function Field({ id, label, required = false, textarea = false, errMsg, classNam
   );
 }
 
-function RadioCard({ name, value, label, icon, checked, onChange, onDeselect, describedBy, required = false, flashKey = null }) {
+function SelectField({ id, label, required = false, errMsg, options, placeholder, flashKey = null, className = '', ...input }) {
+  const errId = `${id}-err`;
   return (
-    <label className={`radio-card ${checked ? 'is-checked' : ''}`}>
-      {flashKey !== null && <span key={flashKey} className="flash-layer" aria-hidden="true"></span>}
-      <input
-        type="radio"
-        className="sr-only"
-        name={name}
-        value={value}
-        checked={checked}
-        onChange={onChange}
-        onClick={onDeselect && checked ? onDeselect : undefined}
-        required={required}
-        aria-describedby={describedBy}
-      />
-      <span className="rc-content flex min-w-0 items-center gap-3">
-        {icon && (
-          <i
-            className={`fa-solid ${icon} w-5 flex-none text-center text-[15px] ${checked ? 'text-bryant-gold' : 'text-bryant-stone'}`}
-            aria-hidden="true"
-          ></i>
-        )}
-        <span className="min-w-0">{label}</span>
-      </span>
-      <i
-        className={`rc-content fa-solid fa-circle-check flex-none text-bryant-gold transition-opacity duration-200 ${checked ? 'opacity-100' : 'opacity-0'}`}
-        aria-hidden="true"
-      ></i>
-    </label>
+    <div className={`fld-wrap ${className}`}>
+      <label htmlFor={id} className="lbl">
+        {label}
+        {required && <Required />}
+      </label>
+      <div className="relative">
+        {flashKey !== null && <span key={flashKey} className="flash-ring" aria-hidden="true"></span>}
+        <select
+          id={id}
+          required={required}
+          aria-describedby={required ? errId : undefined}
+          className="fld fld-select"
+          {...input}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+      {required && <p className="err" id={errId}>{errMsg || 'Please choose an option.'}</p>}
+    </div>
   );
 }
 
-function FieldsetLegend({ children }) {
-  return <legend className="t-eyebrow mb-6 p-0 text-bryant-gold-deep">{children}</legend>;
+function FormLegend({ children }) {
+  return <legend className="t-label mb-5 p-0 text-bryant-gold-light">{children}</legend>;
 }
 
 function SubmitButton({ status, label, busyLabel = 'Submitting' }) {
@@ -373,7 +408,7 @@ function SubmitButton({ status, label, busyLabel = 'Submitting' }) {
       type="submit"
       disabled={busy}
       aria-busy={busy ? 'true' : 'false'}
-      className="btn btn-black mt-12 h-14 w-full"
+      className="btn btn-gold chamfer mt-9 h-[60px] w-full"
     >
       {busy ? (
         <React.Fragment>
@@ -383,26 +418,47 @@ function SubmitButton({ status, label, busyLabel = 'Submitting' }) {
       ) : (
         <React.Fragment>
           {label}
-          <ArrowIcon />
+          <Arrow />
         </React.Fragment>
       )}
     </button>
   );
 }
 
-function SuccessState({ title, body }) {
+function SuccessState({ kicker, title, body, minH = 'min-h-[520px]' }) {
   const headingRef = useRef(null);
   useEffect(() => {
     if (headingRef.current) headingRef.current.focus({ preventScroll: true });
   }, []);
   return (
-    <div role="status" aria-live="polite" className="success-in flex min-h-[560px] flex-col items-center justify-center text-center">
-      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-        <circle className="check-circle" cx="32" cy="32" r="30" stroke="#826E38" strokeWidth="2" />
-        <path className="check-mark" d="M21 33 L29 41 L44 25" stroke="#826E38" strokeWidth="2" strokeLinecap="square" />
-      </svg>
-      <h3 ref={headingRef} tabIndex={-1} className="t-h3 mt-6 text-bryant-ink focus:outline-none">{title}</h3>
-      <p className="mt-3 max-w-[40ch] text-[17px] text-bryant-stone">{body}</p>
+    <div role="status" aria-live="polite" className={`success-in flex flex-col justify-center gap-5 ${minH}`}>
+      <p className="t-label text-bryant-gold-light">{kicker}</p>
+      <h3 ref={headingRef} tabIndex={-1} className="t-display text-bryant-bone focus:outline-none" style={{ fontSize: 'clamp(3rem, 8vw, 5.25rem)' }}>
+        {title}
+      </h3>
+      <p className="max-w-[44ch] text-[18px] leading-relaxed text-bryant-smoke">{body}</p>
+    </div>
+  );
+}
+
+/* Five start-light pods. `lit` drives them from state; `sequence` runs the lights-out loop in CSS. */
+function StartLights({ lit = [], sequence = false, large = false, label }) {
+  return (
+    <div
+      className={`lights ${large ? 'lights-lg' : ''} ${sequence ? 'seq' : ''}`}
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : 'true'}
+    >
+      {[0, 1, 2, 3, 4].map((i) => {
+        const cls = `lt l${i + 1} ${!sequence && lit[i] ? 'on' : ''}`;
+        return (
+          <div key={i} className="pod">
+            <span className={cls}></span>
+            <span className={cls}></span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -415,7 +471,7 @@ function SkipLink() {
   return (
     <a
       href="#main"
-      className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:inline-flex focus:h-10 focus:items-center focus:rounded-full focus:bg-bryant-gold focus:px-4 focus:text-[14px] focus:font-semibold focus:text-white"
+      className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:inline-flex focus:h-10 focus:items-center focus:bg-bryant-gold-light focus:px-4 focus:text-[13px] focus:font-extrabold focus:uppercase focus:tracking-[.12em] focus:text-bryant-ink"
     >
       Skip to content
     </a>
@@ -431,13 +487,13 @@ function ScrollProgress() {
     <div
       ref={ref}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-bryant-gold"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-bryant-gold-light"
       style={{ transform: 'scaleX(0)' }}
     ></div>
   );
 }
 
-function BrandLockup({ size = 40, sub = 'Car Show 2027', lazy = false }) {
+function BrandLockup({ size = 44, sub = 'Car Club · Est. 2026', lazy = false }) {
   return (
     <span className="flex items-center gap-3">
       <span className="flex flex-none items-center justify-center" style={{ width: size, height: size }}>
@@ -453,8 +509,8 @@ function BrandLockup({ size = 40, sub = 'Car Show 2027', lazy = false }) {
         />
       </span>
       <span className="block min-w-0 whitespace-nowrap leading-none">
-        <span className="block font-display text-[15px] font-semibold tracking-[-0.01em] text-white">Bryant University</span>
-        <span className="mt-1.5 block font-mono text-[12px] uppercase tracking-[.12em] text-bryant-gold-light sm:text-[12px]">{sub}</span>
+        <span className="block text-[13px] font-extrabold uppercase tracking-[.08em] text-white [font-stretch:112%] sm:text-[14px]">Bryant University</span>
+        <span className="mt-1.5 block text-[10px] font-semibold uppercase tracking-[.24em] text-bryant-gold-light [font-stretch:112%]">{sub}</span>
       </span>
     </span>
   );
@@ -483,12 +539,12 @@ function Nav({ active, menuOpen, onToggle, toggleRef }) {
           <BrandLockup />
         </a>
 
-        <nav aria-label="Primary" className="hidden items-center gap-5 md:flex lg:gap-8">
+        <nav aria-label="Primary" className="hidden items-center gap-6 md:flex lg:gap-9">
           {NAV_LINKS.map((link) => (
             <a
               key={link.id}
               href={`#${link.id}`}
-              className="nav-link py-2 text-[14px] font-medium"
+              className="nav-link t-nav py-2"
               aria-current={active === link.id ? 'true' : undefined}
             >
               {link.label}
@@ -498,9 +554,8 @@ function Nav({ active, menuOpen, onToggle, toggleRef }) {
         </nav>
 
         <div className="flex flex-none items-center gap-2 md:gap-6">
-          <a href="#register" className="btn btn-gold hidden h-10 px-4 text-[14px] min-[380px]:inline-flex md:px-5">
+          <a href="#register" className="btn btn-gold chamfer-sm hidden h-11 px-5 text-[12px] tracking-[.16em] sm:inline-flex">
             Register
-            <ArrowIcon />
           </a>
           <button
             ref={toggleRef}
@@ -560,7 +615,7 @@ function MobileMenu({ open, onClose, toggleRef }) {
       id="mobile-menu"
       ref={menuRef}
       onBlur={onBlur}
-      className="menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-black px-4 pb-10 pt-24 md:hidden"
+      className="menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bryant-night px-4 pb-10 pt-24 md:hidden"
     >
       <nav aria-label="Mobile">
         <ul>
@@ -572,15 +627,16 @@ function MobileMenu({ open, onClose, toggleRef }) {
                 onClick={() => onClose(false)}
                 className="flex items-baseline gap-4 py-4"
               >
-                <span className="font-mono text-[12px] tracking-[.14em] text-bryant-gold-light">{pad2(i + 1)}</span>
-                <span className="font-display text-[40px] font-semibold leading-none tracking-[-0.03em] text-white">{link.label}</span>
+                <span className="text-[13px] font-black italic text-bryant-gold-light">{pad2(i + 1)}</span>
+                <span className="t-display text-[44px] text-white">{link.label}</span>
               </a>
             </li>
           ))}
         </ul>
       </nav>
       <div className="menu-item mt-auto pt-10" style={{ animationDelay: `${60 + MENU_LINKS.length * 40}ms` }}>
-        <p className="font-mono text-[12px] leading-relaxed tracking-[.08em] text-bryant-mist">
+        <div className="checker-sm mb-6 h-3 w-24" aria-hidden="true"></div>
+        <p className="text-[13px] leading-relaxed tracking-[.04em] text-bryant-mist">
           Bryant University Campus · 1150 Douglas Pike, Smithfield, RI 02917
         </p>
         <div className="mt-4 flex flex-wrap gap-x-6">
@@ -599,158 +655,101 @@ function MobileMenu({ open, onClose, toggleRef }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Hero + spec strip                                                   */
+/* Hero: lights out                                                    */
 /* ------------------------------------------------------------------ */
 
 function Hero() {
   const mediaRef = useRef(null);
-  const contentRef = useRef(null);
   const [imgOk, setImgOk] = useState(true);
 
   useScroll(({ y, vh }) => {
     if (REDUCED || y > vh * 1.2) return;
-    if (mediaRef.current) mediaRef.current.style.transform = `translate3d(0, ${(y * 0.25).toFixed(1)}px, 0)`;
-    if (contentRef.current) contentRef.current.style.opacity = String(1 - Math.min(y / vh, 1) * 0.6);
+    if (mediaRef.current) mediaRef.current.style.transform = `translate3d(0, ${(y * 0.2).toFixed(1)}px, 0)`;
   });
-
-  const readout = [
-    { k: 'Date', v: EVENT_DATE },
-    { k: 'Location', v: 'Bryant University Campus, Smithfield, RI' },
-    { k: 'Admission', v: 'Free for Bryant students & staff · $5 general' }
-  ];
 
   return (
     <section
       id="top"
       aria-labelledby="hero-title"
-      className="relative isolate min-h-[640px] overflow-hidden"
-      style={{ minHeight: 'max(640px, 100svh)', background: '#0A0A0A radial-gradient(ellipse 80% 60% at 70% 30%, #1a1712 0%, #000 70%)' }}
+      className="relative isolate flex flex-col overflow-hidden bg-bryant-night text-bryant-bone"
+      style={{ minHeight: 'max(700px, 100svh)' }}
     >
-      <div ref={mediaRef} className="absolute inset-0 -z-10 will-change-transform" aria-hidden={!imgOk ? 'true' : undefined}>
-        <div className="absolute inset-0 overflow-hidden">
-          {imgOk && (
-            <img
-              src={HERO_IMG}
-              alt="Classic cars displayed on university campus lawn"
-              className="hero-img h-full w-full object-cover"
-              fetchpriority="high"
-              decoding="async"
-              onError={() => setImgOk(false)}
-            />
-          )}
+      <div ref={mediaRef} className="absolute inset-0 -z-30 will-change-transform">
+        {imgOk && (
+          <img
+            src={HERO_IMG}
+            alt="Classic cars displayed on a university campus lawn"
+            className="hero-img h-full w-full object-cover"
+            fetchpriority="high"
+            decoding="async"
+            onError={() => setImgOk(false)}
+          />
+        )}
+      </div>
+      <div className="hero-shade absolute inset-0 -z-20" aria-hidden="true"></div>
+
+      <div className="stripes" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <div className="roundel">
+          <span className="roundel-tag mt-4">BRYANT · RI</span>
+          <span className="roundel-num">27</span>
+          <span className="roundel-tag">CAR SHOW</span>
         </div>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #000 0%, rgba(0,0,0,.6) 40%, rgba(0,0,0,.15) 100%)' }}></div>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,.6) 0%, transparent 65%)' }}></div>
       </div>
 
-      <div ref={contentRef} className="wrap relative flex flex-col justify-end pb-14 pt-32 md:pb-20" style={{ minHeight: 'max(640px, 100svh)' }}>
-        <div className="fade-up" style={{ animationDelay: '0ms' }}>
-          <span className="inline-flex min-h-8 max-w-full items-center gap-2.5 rounded-full border border-[rgba(179,154,90,.4)] bg-[rgba(130,110,56,.12)] px-3 py-1.5">
-            <span className="pulse-dot h-1.5 w-1.5 flex-none rounded-full bg-bryant-gold-light" aria-hidden="true"></span>
-            <span className="font-mono text-[12px] font-medium uppercase leading-tight tracking-[.1em] text-bryant-gold-light sm:text-[12px] sm:tracking-[.12em]">
-              <span className="hidden min-[360px]:inline">Annual Event · </span>{EVENT_DATE}
-            </span>
-          </span>
+      <div className="wrap pt-16 md:pt-20">
+        <div className="pinstripe" aria-hidden="true"></div>
+      </div>
+
+      <div className="wrap flex flex-1 flex-col pb-8 pr-[56px] pt-9 md:pr-[72px] md:pt-12 xl:pr-12">
+        <div className="fade-up flex flex-wrap items-center gap-4 sm:gap-6">
+          <StartLights sequence />
+          <div className="flex flex-col gap-1.5">
+            <span className="go-label text-[13px] font-extrabold italic tracking-[.3em] text-bryant-bone [font-stretch:112%] sm:text-[15px]" aria-hidden="true">LIGHTS OUT</span>
+            <span className="t-label text-bryant-gold-light">{EVENT_DATE}</span>
+          </div>
         </div>
 
-        <h1 id="hero-title" className="t-h1 mt-6 text-white">
-          <span className="line-mask">
-            <span className="rise" style={{ animationDelay: '150ms' }}>Bryant University</span>
-          </span>{' '}
-          <span className="line-mask">
-            <span className="rise" style={{ animationDelay: '270ms' }}>
-              Car Show <span className="serif-accent text-bryant-gold-light">2027</span>
-            </span>
-          </span>
+        <h1 id="hero-title" className="t-display t-h1 fade-up mt-7" style={{ animationDelay: '120ms' }}>
+          Bryant{' '}<br />University{' '}<br /><span className="text-bryant-gold-light">Car Show</span>
+          <span className="sr-only"> 2027</span>
         </h1>
 
-        <p className="t-lead fade-up mt-6 max-w-[40ch] text-bryant-mist" style={{ animationDelay: '450ms' }}>
-          Join the Bryant community for our premier automotive showcase, a day celebrating automotive design, engineering, and the passion that drives us forward.
+        <p className="t-lead fade-up mt-6 max-w-[46ch] text-bryant-smoke" style={{ animationDelay: '220ms' }}>
+          Join the Bryant community for our premier automotive showcase — a day celebrating automotive design, engineering, and the passion that drives us forward.
         </p>
 
-        <div className="fade-up mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center" style={{ animationDelay: '560ms' }}>
-          <a href="#register" className="btn btn-gold h-14 px-8">
+        <div className="fade-up mt-8 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: '320ms' }}>
+          <a href="#register" className="btn btn-gold chamfer h-14 px-7 sm:h-[58px] sm:px-8">
             Register your vehicle
-            <ArrowIcon />
+            <Arrow />
           </a>
-          <a href="#sponsors" className="btn btn-ghost h-14 px-8">
+          <a href="#sponsors" className="btn btn-ghost h-14 px-7 sm:h-[58px]">
             Become a sponsor
           </a>
-          <a href="#schedule" className="u-link mt-2 min-h-[44px] gap-2 self-start text-[15px] font-medium text-bryant-mist transition-colors duration-200 hover:text-white sm:ml-4 sm:mt-0 sm:self-center">
-            View schedule
-            <i className="fa-solid fa-chevron-down text-[12px]" aria-hidden="true"></i>
-          </a>
         </div>
 
-        <dl className="fade-up mt-14 grid grid-cols-1 gap-y-5 border-t border-white/10 pt-6 md:grid-cols-3 md:divide-x md:divide-white/10" style={{ animationDelay: '680ms' }}>
-          {readout.map((item, i) => (
-            <div key={item.k} className={i === 0 ? 'md:pr-6' : 'md:px-6'}>
-              <dt className="font-mono text-[12px] uppercase tracking-[.14em] text-bryant-mist">{item.k}</dt>
-              <dd className="mt-1.5 font-display text-[17px] font-medium leading-snug text-white">{item.v}</dd>
+        <div className="fade-up mt-auto pt-12" style={{ animationDelay: '420ms' }}>
+          <div className="flex flex-col lg:h-[60px] lg:flex-row lg:items-stretch">
+            <div className="flex h-14 flex-none items-stretch lg:h-auto">
+              <span className="checker w-14 flex-none lg:w-[60px]" aria-hidden="true"></span>
+              <span
+                className="flex items-center bg-bryant-gold-light pl-5 pr-9 text-[17px] font-black italic text-bryant-ink"
+                style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 18px) 100%, 0 100%)' }}
+              >
+                CAR SHOW 2027
+              </span>
             </div>
-          ))}
-        </dl>
-
-      </div>
-    </section>
-  );
-}
-
-function CountUp({ to, run }) {
-  const animate = !REDUCED && HAS_IO;
-  const [v, setV] = useState(animate ? 0 : to);
-
-  useEffect(() => {
-    if (!run || !animate) return undefined;
-    let raf;
-    const start = performance.now();
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / 1400);
-      const eased = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
-      setV(Math.round(eased * to));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [run]);
-
-  return (
-    <span className="inline-block tabular-nums" style={{ minWidth: `${String(to).length}ch` }}>
-      {v}
-    </span>
-  );
-}
-
-function StatCell({ stat, index }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { threshold: 0.3 });
-  return (
-    <div
-      ref={ref}
-      className={`reveal ${inView ? 'is-in' : ''} bg-black px-6 py-12 md:py-16`}
-      style={{ transitionDelay: `${index * 60}ms` }}
-    >
-      <p className="sr-only">{stat.display} {stat.label}</p>
-      <div aria-hidden="true">
-        <div className="t-stat text-white">
-          {stat.value !== null ? <CountUp to={stat.value} run={inView} /> : stat.display}
-          {stat.suffix && <span className="text-bryant-gold-light">{stat.suffix}</span>}
-        </div>
-        <span className="draw-x mt-6 block h-px w-8 bg-bryant-gold"></span>
-        <p className="mt-4 font-mono text-[12px] uppercase tracking-[.14em] text-bryant-mist">{stat.label}</p>
-      </div>
-    </div>
-  );
-}
-
-function SpecStrip() {
-  return (
-    <section aria-label="Event at a glance" className="border-y border-white/10 bg-black">
-      <div className="wrap !px-0 sm:!px-8 lg:!px-12">
-        <div className="grid grid-cols-2 gap-px bg-white/10 sm:border-x sm:border-white/10 lg:grid-cols-4">
-          {stats.map((stat, i) => (
-            <StatCell key={stat.label} stat={stat} index={i} />
-          ))}
+            <dl className="grid grid-cols-2 gap-x-5 gap-y-4 border border-bryant-line bg-[rgba(10,10,10,.88)] p-4 sm:p-5 lg:-ml-[18px] lg:flex lg:flex-1 lg:items-center lg:justify-between lg:gap-6 lg:border-l-0 lg:py-0 lg:pl-9 lg:pr-7">
+              {HERO_FACTS.map((f) => (
+                <div key={f.k} className="min-w-0">
+                  <dt className="text-[10px] font-semibold uppercase tracking-[.22em] text-bryant-gold-light [font-stretch:112%]">{f.k}</dt>
+                  <dd className={`mt-1 text-[14px] font-bold leading-snug text-bryant-bone sm:text-[15px] ${f.num ? 'tnum' : ''}`}>{f.v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
       </div>
     </section>
@@ -766,18 +765,18 @@ function BannerFallback() {
     <div className="absolute inset-0 overflow-hidden bg-bryant-carbon" role="img" aria-label="Bryant University Car Club">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url("${HERO_IMG}")`, filter: 'grayscale(1) contrast(1.1) brightness(.8)' }}
+        style={{ backgroundImage: `url("${HERO_IMG}")`, filter: 'grayscale(1) contrast(1.1) brightness(.7)' }}
         aria-hidden="true"
       ></div>
-      <div className="absolute inset-0 bg-bryant-gold mix-blend-multiply" aria-hidden="true"></div>
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,.85) 0%, rgba(0,0,0,.45) 55%, rgba(0,0,0,.2) 100%)' }} aria-hidden="true"></div>
-      <span className="absolute inset-4 border border-[rgba(217,201,160,.3)] md:inset-6" aria-hidden="true"></span>
-      <div className="relative flex h-full flex-col justify-end gap-5 p-8 md:flex-row md:items-end md:justify-start md:gap-8 md:p-14" aria-hidden="true">
-        <span className="hidden sm:block"><Monogram size={88} /></span>
-        <span className="sm:hidden"><Monogram size={56} /></span>
-        <span className="block leading-none">
-          <span className="block font-display text-[32px] font-semibold tracking-[-0.03em] text-white md:text-[56px]">Bryant University</span>
-          <span className="mt-3 block font-mono text-[12px] uppercase tracking-[.16em] text-bryant-gold-pale md:text-[13px]">Car Club · Car Show 2027</span>
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(7,7,7,.92) 0%, rgba(7,7,7,.6) 55%, rgba(7,7,7,.3) 100%)' }} aria-hidden="true"></div>
+      <div className="absolute inset-y-0 right-[8%] flex w-[64px] gap-3 sm:w-[96px] sm:gap-4" aria-hidden="true">
+        <span className="flex-1 bg-bryant-gold-light"></span>
+        <span className="flex-1 bg-bryant-gold-light"></span>
+      </div>
+      <div className="relative flex h-full flex-col justify-end gap-4 p-6 sm:p-10 md:p-14" aria-hidden="true">
+        <span className="t-label text-bryant-gold-light">Car Club · Est. 2026</span>
+        <span className="t-display text-bryant-bone" style={{ fontSize: 'clamp(2.5rem, 7vw, 5.5rem)' }}>
+          Bryant<br />University
         </span>
       </div>
     </div>
@@ -789,8 +788,8 @@ function Banner() {
   const inView = useInView(ref);
   const [failed, setFailed] = useState(false);
   return (
-    <figure ref={ref} className={`reveal ${inView ? 'is-in' : ''} mt-16 md:mt-24`}>
-      <div className={`relative overflow-hidden border border-bryant-line-light bg-bryant-carbon ${failed ? 'aspect-[4/3] sm:aspect-[16/9] md:aspect-[16/6]' : 'aspect-[4/3] md:aspect-[16/7]'}`}>
+    <figure ref={ref} className={`reveal ${inView ? 'is-in' : ''} mt-16 md:mt-20`}>
+      <div className={`relative overflow-hidden bg-bryant-carbon ${failed ? 'aspect-[4/3] sm:aspect-[16/9] md:aspect-[16/6]' : 'aspect-[4/3] md:aspect-[16/7]'}`}>
         <SafeImg
           src={BANNER_IMG}
           alt="Bryant University Car Club banner featuring classic muscle car, exotic supercar, and modern sports car"
@@ -802,7 +801,7 @@ function Banner() {
         />
       </div>
       {!failed && (
-        <figcaption className="mt-3 font-mono text-[12px] tracking-[.08em] text-bryant-stone">
+        <figcaption className="t-label mt-3 text-[11px] text-bryant-stone">
           Fig. 01 — Bryant University Car Club
         </figcaption>
       )}
@@ -817,18 +816,20 @@ function About() {
     { k: 'Admission', v: ADMISSION }
   ];
   return (
-    <section id="about" aria-labelledby="about-title" className="on-light bg-bryant-bone py-24 text-bryant-ink md:py-40">
+    <section id="about" aria-labelledby="about-title" className="on-light bg-bryant-bone py-24 text-bryant-ink md:py-32">
       <div className="wrap">
         <div className="grid grid-cols-1 gap-y-10 lg:grid-cols-12 lg:gap-x-8">
-          <Reveal className="self-start lg:sticky lg:top-28 lg:col-span-5">
+          <Reveal className="lg:col-span-6">
             <Eyebrow index="01" tone="light">About the Event</Eyebrow>
-            <h2 id="about-title" className="t-h2 mt-6 text-bryant-ink">A celebration of automotive innovation.</h2>
+            <h2 id="about-title" className="t-display t-h2 mt-4">
+              A celebration of automotive <span className="text-bryant-gold-deep">innovation.</span>
+            </h2>
           </Reveal>
-          <div className="space-y-6 text-[18px] leading-[1.65] lg:col-span-6 lg:col-start-7 lg:pt-10">
-            <Reveal as="p" className="prose-62 text-bryant-ink">
+          <div className="space-y-6 text-[18px] leading-[1.65] lg:col-span-5 lg:col-start-8 lg:pt-8">
+            <Reveal as="p" className="max-w-[62ch]">
               The Bryant University Car Show brings together automotive enthusiasts, students, alumni, and the local community for a day of celebration and appreciation of automotive design, engineering, and culture.
             </Reveal>
-            <Reveal as="p" delay={80} className="prose-62 text-bryant-stone">
+            <Reveal as="p" delay={80} className="max-w-[62ch] text-bryant-stone">
               This event reflects Bryant's commitment to innovation, excellence, and community engagement. Whether you're a collector, restorer, student, or simply appreciate fine automobiles, this showcase offers something for everyone.
             </Reveal>
           </div>
@@ -837,11 +838,11 @@ function About() {
         <Banner />
 
         <Reveal>
-          <dl className="mt-12 grid grid-cols-1 gap-8 border-t border-bryant-line-light pt-8 md:grid-cols-3">
+          <dl className="mt-12 grid grid-cols-1 gap-8 border-t-2 border-bryant-ink pt-8 md:grid-cols-3">
             {facts.map((f) => (
               <div key={f.k}>
-                <dt className="font-mono text-[12px] uppercase tracking-[.14em] text-bryant-gold-deep">{f.k}</dt>
-                <dd className="mt-2 font-display text-[20px] font-medium leading-snug tracking-[-0.01em] text-bryant-ink">{f.v}</dd>
+                <dt className="t-label text-bryant-gold-deep">{f.k}</dt>
+                <dd className="mt-2 text-[20px] font-semibold leading-snug tracking-[-0.01em]">{f.v}</dd>
               </div>
             ))}
           </dl>
@@ -852,49 +853,226 @@ function About() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Ground rules                                                        */
+/* Instrument cluster (stats)                                          */
 /* ------------------------------------------------------------------ */
 
-function GroundRules() {
+const ARC = 'M66.6 233.4 A118 118 0 1 1 233.4 233.4';
+const TICKS = 'M77.9 222.1 A102 102 0 1 1 222.1 222.1';
+const LED_COLORS = ['#B39A5A', '#B39A5A', '#B39A5A', '#B39A5A', '#D9C38A', '#D9C38A', '#D9C38A', '#D9C38A', '#FF3B2F', '#FF3B2F', '#FF3B2F', '#FF3B2F'];
+
+// fill = % of the 270° arc, deg = needle angle (135° is the zero stop)
+function Dial({ big, fill, deg, min, max, redline = false, fuel = false }) {
   return (
-    <section id="rules" aria-labelledby="rules-title" className="bg-black py-24 text-white md:py-40">
+    <svg viewBox="0 0 300 265" className="mx-auto block h-auto w-full max-w-[250px]" aria-hidden="true" focusable="false">
+      <circle cx="150" cy="150" r="140" fill="#050505" stroke="#2A2A2A" strokeWidth="2" />
+      <path d={ARC} fill="none" stroke="#1C1C1C" strokeWidth="12" />
+      <path className="arcfill" d={ARC} pathLength="100" fill="none" stroke="#B39A5A" strokeWidth="12" style={{ '--fill': String(fill) }} />
+      {redline && <path d={ARC} pathLength="100" fill="none" stroke="#FF3B2F" strokeWidth="12" strokeDasharray="12 100" strokeDashoffset="-88" />}
+      <path d={TICKS} pathLength="100" fill="none" stroke="#6E675A" strokeWidth="9" strokeDasharray={fuel ? '0.9 24.1' : '0.7 9.3'} />
+      <text x="60" y="262" fill="#8C8574" fontSize={fuel ? 16 : 13} fontWeight="800">{min}</text>
+      <text x={fuel ? 228 : 214} y="262" fill={fuel ? '#D9C38A' : '#8C8574'} fontSize={fuel ? 16 : 13} fontWeight="800">{max}</text>
+      {fuel && (
+        <g transform="translate(136 82)" fill="none" stroke="#8C8574" strokeWidth="2">
+          <rect x="0" y="0" width="16" height="22" rx="2" />
+          <path d="M16 6h4l3 4v10a2 2 0 0 1-4 0v-6h-3" />
+          <path d="M3 5h10" />
+        </g>
+      )}
+      <line className="needle" x1="150" y1="150" x2="252" y2="150" stroke="#FF3B2F" strokeWidth="4" strokeLinecap="round" style={{ '--deg': `${deg}deg` }} />
+      <circle cx="150" cy="150" r="12" fill="#0A0A0A" stroke="#B39A5A" strokeWidth="3" />
+      {/* readout sits on top of the needle, with a dark halo so the needle reads as passing behind it */}
+      <text x="150" y="212" textAnchor="middle" fill="#F2EEE4" fontSize="44" fontWeight="900" fontStyle="italic" stroke="#050505" strokeWidth="10" strokeLinejoin="round" style={{ paintOrder: 'stroke' }}>{big}</text>
+    </svg>
+  );
+}
+
+function GearReadout() {
+  return (
+    <div className="mx-auto flex aspect-[300/265] w-full max-w-[250px] flex-col items-center justify-center gap-3" aria-hidden="true">
+      <div className="flex gap-2.5 text-[14px] font-extrabold italic text-[#4A453B] sm:gap-3 sm:text-[16px]">
+        {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+          <span key={n} className={n === 7 ? 'text-bryant-gold-light' : ''}>{n}</span>
+        ))}
+      </div>
+      <div className="gear-box flex h-[104px] w-[104px] items-center justify-center border-2 border-bryant-gold-light bg-[#050505] sm:h-[150px] sm:w-[150px]" style={{ boxShadow: 'inset 0 0 40px rgba(179,154,90,.25)' }}>
+        <span className="text-[86px] font-black italic leading-none text-bryant-bone [font-stretch:70%] sm:text-[128px]">7</span>
+      </div>
+      <span className="t-label text-[10px] text-bryant-label">Gear</span>
+    </div>
+  );
+}
+
+function Gauge({ sr, label, children }) {
+  return (
+    <li className="flex flex-col items-center gap-1">
+      <span className="sr-only">{sr}</span>
+      {children}
+      <p className="t-label text-center text-[11px] text-bryant-smoke sm:text-[12px]" aria-hidden="true">{label}</p>
+    </li>
+  );
+}
+
+function Cluster() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { threshold: 0.25 });
+  return (
+    <section id="numbers" aria-labelledby="numbers-title" className="bg-bryant-night py-24 text-bryant-bone md:py-32">
       <div className="wrap">
-        <Reveal className="max-w-[900px]">
-          <Eyebrow index="02">Event Ground Rules</Eyebrow>
-          <h2 id="rules-title" className="t-h2 mt-6 text-white">
-            Drive <span className="serif-accent text-bryant-gold-light">slow.</span> Be aware of your surroundings.
-          </h2>
-          <p className="t-lead mt-6 text-bryant-mist">
-            We are expecting hundreds of people to attend the show, so it is crucial to drive slow and be aware of your surroundings.
+        <Reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <Eyebrow index="02">Instrument Cluster</Eyebrow>
+            <h2 id="numbers-title" className="t-display t-h2 mt-4">Expected on the lawn</h2>
+          </div>
+          <p className="max-w-[32ch] text-[16px] leading-relaxed text-bryant-mist">
+            What we're planning for in our inaugural year on the Smithfield campus.
           </p>
         </Reveal>
 
-        <Reveal as="p" className="mt-14 font-display font-semibold uppercase leading-tight tracking-[.02em] text-white" style={{ fontSize: 'clamp(1.25rem, 2.2vw, 1.75rem)' }}>
-          We will not tolerate reckless or obnoxious behavior.
+        <div ref={ref} className={`carbon chamfer-top mt-12 border-t border-[#2B2B2B] px-3 pb-8 pt-6 sm:px-8 lg:px-10 ${inView ? 'is-in' : ''}`}>
+          <div className="flex justify-center">
+            <div className="leds" aria-hidden="true">
+              {LED_COLORS.map((c, i) => (
+                <span key={i} className="led" style={{ background: c, animationDelay: `${(i * 0.08).toFixed(2)}s` }}></span>
+              ))}
+            </div>
+          </div>
+          <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-6 lg:grid-cols-4">
+            <Gauge sr="150+ vehicles expected" label="Vehicles Expected">
+              <Dial big="150+" fill={75} deg={337.5} min="0" max="200" redline />
+            </Gauge>
+            <Gauge sr="500+ attendees" label="Attendees">
+              <Dial big="500+" fill={83.3} deg={360} min="0" max="600" />
+            </Gauge>
+            <Gauge sr="7 vehicle categories" label="Vehicle Categories">
+              <GearReadout />
+            </Gauge>
+            <Gauge sr="Free for Bryant students" label="For Bryant Students">
+              <Dial big="FREE" fill={100} deg={405} min="E" max="F" fuel />
+            </Gauge>
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Ground rules: road signs + black flag                               */
+/* ------------------------------------------------------------------ */
+
+function SignGlyph({ kind }) {
+  const s = { fill: 'none', stroke: '#0A0A0A', strokeWidth: 3.5, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  switch (kind) {
+    case 'donuts':
+      return (
+        <g {...s}>
+          <rect x="42" y="34" width="16" height="30" rx="5" />
+          <path d="M50 22 A28 28 0 1 1 26 36" />
+          <path d="M22 30 L26 37 L33 33" />
+        </g>
+      );
+    case 'burnouts':
+      return (
+        <g {...s}>
+          <circle cx="54" cy="62" r="15" strokeWidth="5" />
+          <circle cx="54" cy="62" r="5" fill="#0A0A0A" stroke="none" />
+          <path d="M24 46 a7 7 0 0 1 8 -9 a9 9 0 0 1 16 -3 a7 7 0 0 1 9 8" />
+          <path d="M26 56 h10 M22 64 h12 M26 72 h10" />
+        </g>
+      );
+    case 'drag':
+      return (
+        <g {...s}>
+          <rect x="31" y="22" width="14" height="28" rx="4" />
+          <rect x="55" y="22" width="14" height="28" rx="4" />
+          <path d="M34 58 v16 M42 58 v10 M58 58 v16 M66 58 v10" />
+        </g>
+      );
+    case 'revving':
+      return (
+        <g {...s}>
+          <path d="M26 66 A27 27 0 1 1 74 66" strokeWidth="4" />
+          <path d="M67 40 A27 27 0 0 1 74 66" stroke="#D62B21" strokeWidth="6" strokeLinecap="butt" />
+          <path d="M50 58 L70 44" strokeWidth="4" />
+          <circle cx="50" cy="58" r="4.5" fill="#0A0A0A" stroke="none" />
+        </g>
+      );
+    case 'music':
+      return (
+        <g {...s}>
+          <path d="M26 42 h9 l12 -10 v36 l-12 -10 h-9 z" fill="#0A0A0A" stroke="none" />
+          <path d="M55 42 a10 10 0 0 1 0 16 M61 36 a18 18 0 0 1 0 28 M67 30 a26 26 0 0 1 0 40" />
+        </g>
+      );
+    default:
+      return (
+        <g {...s}>
+          <path d="M37 22 h8 v10 l5 8 v34 h-18 v-34 l5 -8 z" />
+          <rect x="56" y="50" width="22" height="11" rx="5.5" transform="rotate(-35 67 55.5)" />
+        </g>
+      );
+  }
+}
+
+function RuleSign({ kind }) {
+  return (
+    <svg viewBox="0 0 100 100" className="h-auto w-[min(150px,36vw)]" aria-hidden="true" focusable="false">
+      <circle cx="50" cy="50" r="46" fill="#F2EEE4" stroke="#D62B21" strokeWidth="8" />
+      <SignGlyph kind={kind} />
+      <line x1="20" y1="20" x2="80" y2="80" stroke="#D62B21" strokeWidth="8" />
+    </svg>
+  );
+}
+
+function GroundRules() {
+  return (
+    <section id="rules" aria-labelledby="rules-title" className="asphalt py-24 text-bryant-bone md:py-32">
+      <div className="wrap">
+        <div className="flex items-start justify-between gap-10">
+          <Reveal className="max-w-[780px]">
+            <Eyebrow index="03">Ground Rules</Eyebrow>
+            <h2 id="rules-title" className="t-display t-h2 mt-4">
+              Drive slow.{' '}<br /><span className="text-bryant-gold-light">Be aware.</span>
+            </h2>
+            <p className="t-lead mt-6 text-bryant-smoke">
+              We are expecting hundreds of people to attend the show, so it is crucial to drive slow and be aware of your surroundings.
+            </p>
+          </Reveal>
+          <Reveal delay={120} className="hidden md:block">
+            <div className="slow-sign flex" role="img" aria-label="Warning sign: Slow">
+              <div className="slow-diamond"><span>SLOW</span></div>
+            </div>
+          </Reveal>
+        </div>
+
+        <div className="lane mt-12 md:mt-14" aria-hidden="true"></div>
+
+        <Reveal as="p" className="t-label mt-10 text-bryant-bone">
+          We will not tolerate any reckless or obnoxious behavior, such as:
         </Reveal>
 
-        <ul aria-label="Prohibited behavior" className="mt-8 grid grid-cols-1 gap-px border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
-          {rules.map((rule, i) => (
-            <Reveal as="li" key={rule} delay={i * 60} className="bg-black">
-              <div className="rule-cell flex min-h-[72px] items-center gap-4 px-5 py-4 sm:min-h-[168px] sm:flex-col sm:items-stretch sm:justify-between sm:gap-0 sm:p-8">
-                <div className="contents sm:flex sm:items-center sm:justify-between">
-                  <span className="order-1 w-6 flex-none font-mono text-[12px] tracking-[.14em] text-bryant-gold-light sm:w-auto">{pad2(i + 1)}</span>
-                  <i className="fa-solid fa-ban order-3 ml-auto flex-none text-[18px] text-bryant-gold-light sm:ml-0" aria-hidden="true"></i>
-                </div>
-                <span className="relative order-2 inline-block self-center font-display text-[20px] font-medium leading-tight tracking-[-0.015em] text-white sm:order-none sm:mt-8 sm:self-start sm:text-[24px]">
-                  {rule}
-                  <span className="strike" aria-hidden="true"></span>
-                </span>
-              </div>
+        <ul aria-label="Prohibited behavior" className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
+          {rules.map((r, i) => (
+            <Reveal as="li" key={r.icon} delay={i * 60} className="flex flex-col items-center gap-4 text-center">
+              <RuleSign kind={r.icon} />
+              <span className="text-[17px] font-extrabold uppercase italic leading-tight [font-stretch:90%] sm:text-[20px]">{r.label}</span>
             </Reveal>
           ))}
         </ul>
 
-        <Reveal role="note" className="mt-8 flex items-start gap-4 border-l-2 border-bryant-gold-light bg-bryant-carbon p-6 md:p-8">
-          <span className="mt-2.5 h-2 w-2 flex-none rounded-full bg-bryant-signal" aria-hidden="true"></span>
-          <p className="text-[18px] font-semibold leading-snug text-white md:text-[20px]">
-            If you are seen conducting any of this behavior, you will be asked to leave IMMEDIATELY!
-          </p>
+        <Reveal role="note" className="chamfer mt-14 flex flex-col gap-5 bg-bryant-bone p-6 text-bryant-ink sm:flex-row sm:items-center sm:gap-8 sm:px-8 sm:py-6">
+          <div className="relative h-[74px] w-[104px] flex-none" aria-hidden="true">
+            <span className="absolute left-0 top-0 h-[74px] w-[6px] bg-bryant-ink"></span>
+            <svg className="flag absolute left-[6px] top-[2px]" width="96" height="56" viewBox="0 0 96 56" focusable="false">
+              <path d="M0 0 C22 6 40 -4 62 2 C78 6 88 3 96 0 L96 52 C88 55 78 58 62 54 C40 48 22 58 0 52 Z" fill="#0A0A0A" />
+            </svg>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="t-label text-[#6B5A2C]">Black flag</span>
+            <p className="t-display leading-[.95]" style={{ fontSize: 'clamp(1.75rem, 4vw, 2.6rem)' }}>
+              If you are seen conducting any of this behavior, you will be asked to leave IMMEDIATELY!
+            </p>
+          </div>
         </Reveal>
       </div>
     </section>
@@ -921,7 +1099,7 @@ function ImageBand() {
   });
 
   return (
-    <section ref={sectionRef} aria-label="Bryant University Campus" className="relative isolate flex min-h-[60vh] items-end overflow-hidden bg-bryant-carbon" style={{ minHeight: 'max(420px, 60svh)' }}>
+    <section ref={sectionRef} aria-label="Bryant University Campus" className="relative isolate flex items-end overflow-hidden bg-bryant-carbon" style={{ minHeight: 'max(420px, 60svh)' }}>
       <div ref={mediaRef} className="absolute inset-x-0 -bottom-20 -top-20 -z-10 will-change-transform" aria-hidden="true">
         {imgOk && (
           <img
@@ -934,14 +1112,14 @@ function ImageBand() {
           />
         )}
       </div>
-      <div className="absolute inset-0 -z-10" style={{ background: 'linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.55) 45%, rgba(0,0,0,.35) 100%)' }} aria-hidden="true"></div>
-      <div className="absolute inset-0 -z-10" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, transparent 100%)' }} aria-hidden="true"></div>
-      <div className="absolute inset-x-0 top-0 h-px bg-white/10" aria-hidden="true"></div>
+      <div className="absolute inset-0 -z-10" style={{ background: 'linear-gradient(to top, rgba(7,7,7,.94) 0%, rgba(7,7,7,.55) 45%, rgba(7,7,7,.35) 100%)' }} aria-hidden="true"></div>
+      <div className="absolute inset-0 -z-10" style={{ background: 'linear-gradient(90deg, rgba(7,7,7,.75) 0%, rgba(7,7,7,.25) 60%, transparent 100%)' }} aria-hidden="true"></div>
+      <div className="checker-sm absolute inset-x-0 top-0 h-3" aria-hidden="true"></div>
       <div className="wrap relative py-16 md:py-24">
         <Reveal>
-          <p className="t-eyebrow text-bryant-gold-light">Bryant University Campus <span aria-hidden="true">·</span> Smithfield, RI</p>
-          <p className="t-h2 mt-6 max-w-[16ch] text-white">
-            Design, engineering, and the <span className="serif-accent text-bryant-gold-light">passion</span> that drives us.
+          <p className="t-label text-bryant-gold-light">Bryant University Campus <span aria-hidden="true">·</span> Smithfield, RI</p>
+          <p className="t-display mt-5 max-w-[14ch] text-bryant-bone" style={{ fontSize: 'clamp(2.75rem, 8vw, 6rem)' }}>
+            Design, engineering, and the <span className="text-bryant-gold-light">passion</span> that drives us.
           </p>
         </Reveal>
       </div>
@@ -950,112 +1128,179 @@ function ImageBand() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Schedule                                                            */
+/* Schedule: timing tower                                              */
 /* ------------------------------------------------------------------ */
 
+const TOWER_BARS = ['#B39A5A', '#B39A5A', '#8C7A48', '#5E5233'];
+const TOWER_COLS = 'grid-cols-[44px_6px_minmax(0,1fr)_auto] sm:grid-cols-[64px_8px_minmax(0,1fr)_150px_110px]';
+
 function Schedule() {
-  const olRef = useRef(null);
-  const fillRef = useRef(null);
-  const nodeRefs = useRef([]);
-
-  useScroll(({ vh }) => {
-    const ol = olRef.current;
-    if (!ol || !fillRef.current) return;
-    const r = ol.getBoundingClientRect();
-    if (r.height <= 0) return;
-    const p = Math.max(0, Math.min(1, (vh * 0.6 - r.top) / r.height));
-    fillRef.current.style.transform = `scaleY(${p})`;
-    const filled = 8 + p * (r.height - 16);
-    nodeRefs.current.forEach((node) => {
-      if (!node || !node.parentElement) return;
-      const center = node.parentElement.offsetTop + 42 + 7;
-      node.classList.toggle('is-lit', filled >= center);
-    });
-  });
-
   return (
-    <section id="schedule" aria-labelledby="schedule-title" className="on-light bg-white py-24 text-bryant-ink md:py-40">
+    <section id="schedule" aria-labelledby="schedule-title" className="relative isolate overflow-hidden bg-bryant-night py-24 text-bryant-bone md:py-32">
+      <div className="speedlines absolute -right-32 -top-20 -z-10 h-[1200px] w-[760px]" aria-hidden="true"></div>
       <div className="wrap">
-        <div className="grid grid-cols-1 gap-y-14 lg:grid-cols-12 lg:gap-x-8">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-12">
           <Reveal className="self-start lg:sticky lg:top-28 lg:col-span-5">
-            <Eyebrow index="03" tone="light">Event Timeline</Eyebrow>
-            <h2 id="schedule-title" className="t-h2 mt-6 text-bryant-ink">Schedule of events.</h2>
-            <p className="t-time mt-4 text-bryant-gold-deep">{EVENT_DATE}</p>
+            <Eyebrow index="04">Schedule</Eyebrow>
+            <h2 id="schedule-title" className="t-display t-h2 mt-4">
+              Show day,{' '}<br /><span className="text-bryant-gold-light">lap by lap.</span>
+            </h2>
+            <p className="t-lead mt-6 text-bryant-smoke">
+              Four times to know. The exact date drops soon — the show is coming in April 2027.
+            </p>
+            <p className="t-label mt-8 inline-flex items-center gap-3 border border-[rgba(179,154,90,.5)] px-4 py-2.5 text-bryant-gold-pale">
+              <span className="h-2 w-2 flex-none bg-bryant-gold-light" aria-hidden="true"></span>
+              {EVENT_DATE}
+            </p>
           </Reveal>
 
-          <ol ref={olRef} className="relative pl-10 lg:col-span-7">
-            <span className="absolute bottom-2 left-[7px] top-2 w-px bg-bryant-line-light" aria-hidden="true"></span>
-            <span ref={fillRef} className="tl-fill absolute bottom-2 left-[7px] top-2 w-px bg-bryant-gold" aria-hidden="true"></span>
-            {schedule.map((item, i) => (
-              <li key={item.time} className={`tl-row relative py-8 ${i < schedule.length - 1 ? 'border-b border-bryant-line-light' : ''}`}>
-                <span
-                  ref={(el) => (nodeRefs.current[i] = el)}
-                  className="tl-node absolute left-[-40px] top-[42px] h-[15px] w-[15px] rounded-full"
-                  aria-hidden="true"
-                ></span>
-                <Reveal delay={i * 60}>
-                  <time className="t-time block text-bryant-gold-deep">{item.time}</time>
-                  <h3 className="tl-name mt-2 font-display font-medium leading-[1.1] tracking-[-0.025em] text-bryant-ink" style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)' }}>
-                    {item.event}
-                  </h3>
-                  <p className="mt-2 text-[16px] text-bryant-stone">{item.detail}</p>
-                </Reveal>
-              </li>
-            ))}
-          </ol>
+          <div className="lg:col-span-7">
+            <div className="flex h-12 items-stretch">
+              <span className="checker-sm w-12 flex-none" aria-hidden="true"></span>
+              <div className="flex flex-1 items-center justify-between gap-3 bg-bryant-gold-light px-4 text-bryant-ink sm:px-5">
+                <span className="text-[15px] font-black italic sm:text-[18px]">BRYANT CAR SHOW 2027</span>
+                <span className="t-label hidden text-[11px] sm:inline">Timing · 4 events</span>
+              </div>
+            </div>
+            <div className={`mt-2 hidden pb-1 sm:grid ${TOWER_COLS}`} aria-hidden="true">
+              <span className="t-label pl-3.5 text-[10px] text-bryant-label">Pos</span>
+              <span></span>
+              <span className="t-label pl-5 text-[10px] text-bryant-label">Event</span>
+              <span className="t-label pr-5 text-right text-[10px] text-bryant-label">Time</span>
+              <span className="t-label pr-5 text-right text-[10px] text-bryant-label">Interval</span>
+            </div>
+            <ol className="mt-2 flex flex-col gap-1.5 sm:mt-0" aria-label="Schedule of events">
+              {schedule.map((item, i) => {
+                const last = i === schedule.length - 1;
+                return (
+                  <Reveal as="li" key={item.code} delay={i * 80} className={`tower-row grid min-h-[96px] border border-bryant-line bg-[rgba(22,22,22,.96)] sm:min-h-[104px] ${TOWER_COLS}`}>
+                    {last ? (
+                      <span className="checker flex items-center justify-center" aria-hidden="true">
+                        <span className="flex h-8 w-8 items-center justify-center bg-bryant-bone text-[22px] font-black italic text-bryant-ink sm:h-10 sm:w-10 sm:text-[30px]">{i + 1}</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center bg-bryant-bone text-[26px] font-black italic text-bryant-ink sm:text-[34px]" aria-hidden="true">{i + 1}</span>
+                    )}
+                    <span style={{ background: TOWER_BARS[i] }} aria-hidden="true"></span>
+                    <div className="flex min-w-0 flex-col justify-center gap-1 px-3.5 py-3 sm:px-5">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                        <span className="text-[18px] font-black tracking-[.04em] [font-stretch:112%] sm:text-[26px]" aria-hidden="true">{item.code}</span>
+                        <h3 className="text-[16px] font-bold leading-tight sm:text-[20px]">{item.event}</h3>
+                      </div>
+                      <p className="text-[14px] leading-snug text-bryant-mist sm:text-[15px]">{item.detail}</p>
+                    </div>
+                    <time className="tnum flex items-center justify-end whitespace-nowrap pr-3.5 text-[17px] font-extrabold italic sm:pr-5 sm:text-[28px]">{item.time}</time>
+                    <span
+                      className={`tnum hidden items-center justify-end pr-5 sm:flex ${i === 0 ? 't-label text-bryant-gold-light' : 'text-[18px] font-bold text-bryant-smoke'}`}
+                      aria-hidden="true"
+                    >
+                      {item.gap}
+                    </span>
+                  </Reveal>
+                );
+              })}
+            </ol>
+          </div>
         </div>
+
+        <Reveal className="mt-14">
+          <div className="t-label flex justify-between text-[11px] text-bryant-label">
+            <span className="tnum">9:00 AM</span>
+            <span className="hidden sm:inline">Show day · 6 h 30 min</span>
+            <span className="tnum">3:30 PM</span>
+          </div>
+          <div
+            className="mt-2.5 grid h-14 gap-1"
+            style={{ gridTemplateColumns: sectors.map((s) => `${s.mins}fr`).join(' ') }}
+            role="img"
+            aria-label="Show day in three sectors: registration 9:00 to 10:00 AM, gates open 10:00 AM to 12:30 PM, food and refreshments 12:30 to 3:30 PM"
+          >
+            {sectors.map((s) => (
+              <div key={s.n} className="flex min-w-0 items-center justify-between gap-2 px-3 sm:px-4" style={{ background: s.bg, color: s.fg }}>
+                <span className="text-[15px] font-black italic sm:text-[16px]">{s.n}</span>
+                <span className="hidden truncate text-[13px] font-bold md:inline">{s.label}</span>
+              </div>
+            ))}
+          </div>
+          <dl className="mt-4 grid grid-cols-1 gap-2 text-[14px] text-bryant-smoke sm:grid-cols-3 md:hidden" aria-hidden="true">
+            {sectors.map((s) => (
+              <div key={s.n} className="flex gap-2">
+                <dt className="font-black italic text-bryant-gold-light">{s.n}</dt>
+                <dd>{s.label} · <span className="tnum">{s.span}</span></dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
       </div>
     </section>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Categories                                                          */
+/* Categories: black-and-gold plates                                   */
 /* ------------------------------------------------------------------ */
 
 function Categories({ onPick }) {
+  const [picked, setPicked] = useState('classic');
+  const idx = Math.max(0, categories.findIndex((c) => c.value === picked));
+  const sel = categories[idx];
+
   return (
-    <section id="categories" aria-labelledby="categories-title" className="bg-black py-24 text-white md:py-40">
+    <section id="categories" aria-labelledby="categories-title" className="garage-wall relative isolate py-24 text-bryant-bone md:py-32">
+      <div className="grid-lines absolute inset-0 -z-10" aria-hidden="true"></div>
       <div className="wrap">
-        <Reveal className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-[820px]">
-            <Eyebrow index="04">Vehicle Showcase</Eyebrow>
-            <h2 id="categories-title" className="t-h2 mt-6 text-white">Seven categories. Every kind of enthusiast.</h2>
+        <Reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <Eyebrow index="05">Vehicle Categories</Eyebrow>
+            <h2 id="categories-title" className="t-display t-h2 mt-4">
+              Pick your <span className="text-bryant-gold-light">plate.</span>
+            </h2>
           </div>
-          <p className="text-[17px] leading-relaxed text-bryant-mist md:max-w-[36ch]">
-            Vehicles will be displayed across seven distinct categories, celebrating diversity in automotive excellence.
+          <p className="max-w-[40ch] text-[17px] leading-relaxed text-bryant-smoke">
+            Vehicles will be displayed across seven distinct categories, celebrating diversity in automotive excellence. Cars and motorcycles welcome — tap a plate to see the class.
           </p>
         </Reveal>
 
-        <ul className="mt-14 border-b border-white/10">
-          {categories.map((c, i) => (
-            <li key={c.value}>
-              <Reveal delay={i * 60}>
-                <button
-                  type="button"
-                  onClick={() => onPick(c.value)}
-                  className="cat-row group relative grid w-full grid-cols-[48px_1fr] items-center gap-x-4 border-t border-white/10 py-7 text-left md:grid-cols-[80px_1fr_minmax(0,30ch)_56px] md:gap-x-8 md:py-9"
-                >
-                  <span className="self-start pt-[0.6em] font-mono text-[13px] tracking-[.08em] text-bryant-gold-light md:self-center md:pt-0" aria-hidden="true">{pad2(i + 1)}</span>
-                  <span className="block min-w-0">
-                    <span className="sr-only">Register a vehicle in </span>
-                    <span className="cat-name block font-display font-medium leading-[1.05] tracking-[-0.03em]" style={{ fontSize: 'clamp(1.75rem, 4.2vw, 3.5rem)' }}>
-                      {c.name}
-                    </span>
-                    <span className="cat-hint mt-3 hidden font-mono text-[12px] uppercase tracking-[.14em] text-bryant-gold-light md:block" aria-hidden="true">
-                      Register in this category →
-                    </span>
+        <ul className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10" aria-label="Vehicle categories">
+          {categories.map((c, i) => {
+            const on = c.value === picked;
+            return (
+              <Reveal as="li" key={c.value} delay={i * 50} className="flex flex-col gap-3">
+                <button type="button" className={`plate ${on ? 'is-on' : ''}`} aria-pressed={on ? 'true' : 'false'} onClick={() => setPicked(c.value)}>
+                  <span className="sr-only">{c.name}: {c.description}</span>
+                  <span className="plate-bolt" style={{ left: '26%' }} aria-hidden="true"></span>
+                  <span className="plate-bolt" style={{ right: '26%' }} aria-hidden="true"></span>
+                  <span className="plate-sticker" aria-hidden="true">{pad2(i + 1)}</span>
+                  <span className="plate-tag" aria-hidden="true">
+                    <span className="plate-tag-long">BRYANT UNIVERSITY</span>
+                    <span className="plate-tag-short">BRYANT</span>
                   </span>
-                  <span className="col-start-2 mt-2 text-[15px] leading-snug text-bryant-mist md:col-start-auto md:mt-0">{c.description}</span>
-                  <span className="cat-icons hidden items-center justify-end gap-3 text-[16px] text-bryant-gold-light md:flex" aria-hidden="true">
-                    <i className={`fa-solid ${c.icon}`}></i>
-                    <i className="fa-solid fa-arrow-right text-[13px]"></i>
-                  </span>
-                  <span className="cat-sweep absolute bottom-[-1px] left-0 h-px w-full bg-bryant-gold" aria-hidden="true"></span>
+                  <span className="plate-code" aria-hidden="true">{c.code}</span>
+                  <span className="plate-tag" aria-hidden="true">CAR SHOW · 2027</span>
                 </button>
+                <span className={`text-[15px] font-bold transition-colors duration-200 sm:text-[16px] ${on ? 'text-bryant-gold-pale' : 'text-bryant-mist'}`} aria-hidden="true">
+                  {c.name}
+                </span>
               </Reveal>
-            </li>
-          ))}
+            );
+          })}
+          <li className="col-span-2 lg:col-span-1">
+            <div className="chamfer-tr flex h-full min-h-[164px] flex-col justify-between gap-4 bg-bryant-gold-light p-5 text-bryant-ink" aria-live="polite">
+              <div className="flex flex-col gap-1.5">
+                <span className="t-label text-[10px]">Class {pad2(idx + 1)}</span>
+                <span className="t-display text-[28px] leading-[.95]">{sel.name}</span>
+                <span className="text-[14px] leading-snug">{sel.description}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onPick(sel.value)}
+                className="inline-flex min-h-[44px] items-center gap-2 self-start border-b-2 border-bryant-ink text-[12px] font-extrabold uppercase tracking-[.14em] [font-stretch:112%] focus-visible:outline-bryant-ink"
+              >
+                Register in this class
+                <Arrow className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </li>
         </ul>
       </div>
     </section>
@@ -1063,94 +1308,84 @@ function Categories({ onPick }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Register                                                            */
+/* Register: race entry with start lights                              */
 /* ------------------------------------------------------------------ */
 
-function FormCard({ children, minH = 'min-h-[640px]' }) {
-  return (
-    <Reveal className={`border border-bryant-line-light bg-white p-6 sm:p-10 ${minH}`}>
-      {children}
-    </Reveal>
-  );
-}
-
 function Register({ data, setData, flash, finishRef }) {
-  const formRef = useRef(null);
-  const wasDone = useRef(false);
   const [status, submit, finishNow] = useSubmitFlow(() => setData(EMPTY_REG));
   if (finishRef) finishRef.current = finishNow;
-
-  useEffect(() => {
-    if (status === 'done') wasDone.current = true;
-    if (status === 'idle' && wasDone.current) {
-      wasDone.current = false;
-      const active = document.activeElement;
-      if (!active || active === document.body) {
-        const first = document.getElementById('reg-firstName');
-        if (first) first.focus({ preventScroll: true });
-      }
-    }
-  }, [status]);
+  useRefocusAfterReset(status, 'reg-firstName');
 
   const onChange = (e) => {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const done = status === 'done';
   const steps = [
-    { n: '01', label: 'Driver', done: !!(data.firstName && data.lastName && data.email) },
-    { n: '02', label: 'Vehicle', done: !!(data.vehicleYear && data.vehicleMake && data.vehicleModel) },
-    { n: '03', label: 'Category', done: !!data.category }
+    { label: 'Name', done: !!(data.firstName.trim() && data.lastName.trim()) },
+    { label: 'Email', done: /\S+@\S+\.\S+/.test(data.email) },
+    { label: 'Year', done: /^\d{4}$/.test(data.vehicleYear.trim()) },
+    { label: 'Car', done: !!(data.vehicleMake.trim() && data.vehicleModel.trim()) },
+    { label: 'Class', done: !!data.category }
   ];
+  const lit = steps.map((s) => !done && s.done);
+  const count = lit.filter(Boolean).length;
+  const car = [data.vehicleYear, data.vehicleMake, data.vehicleModel].map((v) => v.trim()).filter(Boolean).join(' ');
+  const cat = categories.find((c) => c.value === data.category);
 
   return (
-    <section id="register" aria-labelledby="register-title" className="on-light bg-bryant-bone py-24 text-bryant-ink md:py-40">
+    <section id="register" aria-labelledby="register-title" className="bg-bryant-night py-24 text-bryant-bone md:py-32">
       <div className="wrap">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-8">
-          <Reveal className="self-start lg:sticky lg:top-28 lg:col-span-5">
-            <Eyebrow index="05" tone="light">Join the Show</Eyebrow>
-            <h2 id="register-title" className="t-h2 mt-6 text-bryant-ink">Vehicle registration.</h2>
-            <p className="mt-6 max-w-[40ch] text-[18px] leading-relaxed text-bryant-stone">
-              Register your vehicle to be part of this premier automotive showcase.
-            </p>
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-14">
+          <div className="flex flex-col lg:col-span-5">
+            <Reveal>
+              <Eyebrow index="06">Vehicle Registration</Eyebrow>
+              <h2 id="register-title" className="t-display t-h2 mt-4">
+                Enter{' '}<br /><span className="text-bryant-gold-light">the show.</span>
+              </h2>
+              <p className="t-lead mt-6 text-bryant-smoke">
+                Register your vehicle to be part of this premier automotive showcase. Fill each step and watch the lights come on.
+              </p>
+            </Reveal>
 
-            <ol className="mt-10 border-b border-bryant-line-light" aria-label="Registration progress">
-              {steps.map((s) => (
-                <li key={s.n} className="flex items-center gap-4 border-t border-bryant-line-light py-4">
-                  <span className="font-mono text-[12px] tracking-[.14em] text-bryant-gold-deep">{s.n}</span>
-                  <span className={`flex-1 text-[15px] font-medium transition-colors duration-200 ${s.done ? 'text-bryant-ink' : 'text-bryant-stone'}`}>{s.label}</span>
-                  {s.done ? (
-                    <React.Fragment>
-                      <i className="fa-solid fa-check text-[14px] text-bryant-gold" aria-hidden="true"></i>
-                      <span className="sr-only">complete</span>
-                    </React.Fragment>
-                  ) : (
-                    <span className="h-[14px] w-[14px] rounded-full border border-bryant-control-line" aria-hidden="true"></span>
-                  )}
-                </li>
-              ))}
-            </ol>
+            <Reveal delay={100} className="mt-10">
+              <StartLights large lit={lit} label={done ? 'Lights out: registration submitted' : `${count} of 5 start lights on`} />
+              <ol className="ml-[7px] mt-3 flex gap-[6px] sm:ml-[9px] sm:gap-2" aria-label="Registration steps">
+                {steps.map((s, i) => (
+                  <li key={s.label} className={`flex w-[40px] justify-center whitespace-nowrap text-[9px] font-semibold uppercase tracking-[.12em] [font-stretch:112%] sm:w-[56px] sm:text-[10px] ${lit[i] ? 'text-bryant-bone' : 'text-bryant-label'}`}>
+                    {s.label}
+                    <span className="sr-only">{s.done ? ': complete' : ': not yet'}</span>
+                  </li>
+                ))}
+              </ol>
+            </Reveal>
 
-            <dl className="mt-10 space-y-5">
-              <div>
-                <dt className="font-mono text-[12px] uppercase tracking-[.14em] text-bryant-gold-deep">Registration Opens</dt>
-                <dd className="mt-1 text-[15px] text-bryant-ink">9:00 AM</dd>
+            <Reveal delay={160} className="mt-10 border-t border-[rgba(179,154,90,.6)] pt-5 lg:mt-auto">
+              <div className="t-label flex justify-between text-[11px] text-bryant-gold-light">
+                <span>Entry</span>
+                <span className="tnum">{done ? 'Lights out' : `${count} / 5 lights`}</span>
               </div>
-            </dl>
-          </Reveal>
+              <p className={`t-display mt-2 line-clamp-2 break-words leading-[.95] ${car ? 'text-bryant-bone' : 'text-bryant-label'}`} style={{ fontSize: 'clamp(2.5rem, 5vw, 3.75rem)' }}>
+                {car || 'Your car here'}
+              </p>
+              <p className="t-label mt-2 text-[13px] text-bryant-smoke">{cat ? cat.name : 'Choose a class'}</p>
+            </Reveal>
+          </div>
 
           <div className="lg:col-span-7">
-            <FormCard>
-              {status === 'done' ? (
+            <Reveal className="chamfer-tr min-h-[600px] border border-[#222] bg-[#111] p-5 sm:p-9">
+              {done ? (
                 <SuccessState
+                  kicker="Lights out"
                   title="Registration Submitted!"
                   body="Thank you for registering. We'll be in touch soon with more details."
                 />
               ) : (
-                <form ref={formRef} onSubmit={submit} aria-labelledby="register-title">
+                <form onSubmit={submit} aria-labelledby="register-title">
                   <fieldset className="m-0 border-0 p-0">
-                    <FieldsetLegend>01 — Driver</FieldsetLegend>
-                    <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2">
+                    <FormLegend>01 — Driver</FormLegend>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                       <Field id="reg-firstName" name="firstName" label="First Name" required autoComplete="given-name" value={data.firstName} onChange={onChange} />
                       <Field id="reg-lastName" name="lastName" label="Last Name" required autoComplete="family-name" value={data.lastName} onChange={onChange} />
                       <Field id="reg-email" name="email" type="email" label="Email" required autoComplete="email" errMsg="Please enter a valid email." value={data.email} onChange={onChange} />
@@ -1158,52 +1393,43 @@ function Register({ data, setData, flash, finishRef }) {
                     </div>
                   </fieldset>
 
-                  <fieldset className="m-0 mt-12 border-0 p-0">
-                    <FieldsetLegend>02 — Vehicle</FieldsetLegend>
-                    <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-x-6 gap-y-8 sm:grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)] sm:gap-x-8">
+                  <fieldset className="m-0 mt-9 border-0 p-0">
+                    <FormLegend>02 — Vehicle</FormLegend>
+                    <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-5 sm:grid-cols-[130px_minmax(0,1fr)_minmax(0,1fr)]">
                       <Field id="reg-year" name="vehicleYear" label="Year" required inputMode="numeric" pattern="[0-9]{4}" maxLength={4} errMsg="Enter a 4-digit year." value={data.vehicleYear} onChange={onChange} />
                       <Field id="reg-make" name="vehicleMake" label="Make" required value={data.vehicleMake} onChange={onChange} />
                       <Field id="reg-model" name="vehicleModel" label="Model" required className="col-span-2 sm:col-span-1" value={data.vehicleModel} onChange={onChange} />
                     </div>
                   </fieldset>
 
-                  <fieldset className="choice-group m-0 mt-12 border-0 p-0">
-                    <FieldsetLegend>
-                      03 — Category
-                      <span className="text-bryant-gold-deep" aria-hidden="true">&nbsp;*</span>
-                      <span className="sr-only"> (required)</span>
-                    </FieldsetLegend>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {categories.map((c) => (
-                        <RadioCard
-                          key={c.value}
-                          name="category"
-                          value={c.value}
-                          label={c.name}
-                          icon={c.icon}
-                          required
-                          describedBy="reg-category-err"
-                          checked={data.category === c.value}
-                          onChange={onChange}
-                          flashKey={flash && flash.value === c.value ? flash.n : null}
-                        />
-                      ))}
-                    </div>
-                    <p className="err" id="reg-category-err">Please choose a category.</p>
+                  <fieldset className="m-0 mt-9 border-0 p-0">
+                    <FormLegend>03 — Class</FormLegend>
+                    <SelectField
+                      id="reg-category"
+                      name="category"
+                      label="Category"
+                      required
+                      placeholder="Select a category"
+                      errMsg="Please choose a category."
+                      options={categories.map((c) => ({ value: c.value, label: c.name }))}
+                      value={data.category}
+                      onChange={onChange}
+                      flashKey={flash ? flash.n : null}
+                    />
                   </fieldset>
 
-                  <fieldset className="m-0 mt-12 border-0 p-0">
-                    <FieldsetLegend>04 — Notes</FieldsetLegend>
+                  <fieldset className="m-0 mt-9 border-0 p-0">
+                    <FormLegend>04 — Notes</FormLegend>
                     <Field id="reg-comments" name="comments" label="Additional Comments" textarea rows={4} value={data.comments} onChange={onChange} />
                   </fieldset>
 
                   <SubmitButton status={status} label="Submit registration" />
-                  <p className="mt-4 font-mono text-[12px] tracking-[.08em] text-bryant-stone">
-                    Questions? <a href={`mailto:${EMAIL}`} className="u-static hover:text-bryant-ink">{EMAIL}</a>
+                  <p className="mt-4 text-[13px] text-bryant-mist">
+                    Questions? <a href={`mailto:${EMAIL}`} className="u-static text-bryant-smoke hover:text-white">{EMAIL}</a>
                   </p>
                 </form>
               )}
-            </FormCard>
+            </Reveal>
           </div>
         </div>
       </div>
@@ -1212,97 +1438,108 @@ function Register({ data, setData, flash, finishRef }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Sponsors                                                            */
+/* Sponsors: pit garages                                               */
 /* ------------------------------------------------------------------ */
 
 function Sponsors({ data, setData }) {
-  const wasDone = useRef(false);
   const [status, submit] = useSubmitFlow(() => setData(EMPTY_SPONSOR));
-
-  useEffect(() => {
-    if (status === 'done') wasDone.current = true;
-    if (status === 'idle' && wasDone.current) {
-      wasDone.current = false;
-      const active = document.activeElement;
-      if (!active || active === document.body) {
-        const first = document.getElementById('sp-company');
-        if (first) first.focus({ preventScroll: true });
-      }
-    }
-  }, [status]);
+  useRefocusAfterReset(status, 'sp-company');
 
   const onChange = (e) => {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const clearLevel = () => setData((prev) => ({ ...prev, sponsorshipLevel: '' }));
+  const toggleLevel = (value) => {
+    setData((prev) => ({ ...prev, sponsorshipLevel: prev.sponsorshipLevel === value ? '' : value }));
+  };
+
+  const done = status === 'done';
+  const chosen = sponsorLevels.find((l) => l.value === data.sponsorshipLevel);
 
   return (
-    <section id="sponsors" aria-labelledby="sponsors-title" className="on-light bg-white py-24 text-bryant-ink md:py-40">
+    <section id="sponsors" aria-labelledby="sponsors-title" className="relative isolate bg-bryant-night py-24 text-bryant-bone md:py-32">
+      <div className="checker-sm absolute inset-x-0 top-0 h-3" aria-hidden="true"></div>
       <div className="wrap">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-8">
-          <Reveal className="self-start lg:sticky lg:top-28 lg:col-span-5">
-            <Eyebrow index="06" tone="light">Partnership Opportunities</Eyebrow>
-            <h2 id="sponsors-title" className="t-h2 mt-6 text-bryant-ink">
-              Become a <span className="serif-accent text-bryant-gold">partner</span>.
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-14">
+          <Reveal className="lg:col-span-5 lg:col-start-1 lg:row-start-1">
+            <Eyebrow index="07">Sponsorship</Eyebrow>
+            <h2 id="sponsors-title" className="t-display t-h2 mt-4">
+              Partner with{' '}<br /><span className="text-bryant-gold-light">the show.</span>
             </h2>
-            <p className="mt-6 max-w-[40ch] text-[18px] leading-relaxed text-bryant-stone">
-              Support the Bryant University Car Show and connect with our community.
+            <p className="t-lead mt-6 text-bryant-smoke">
+              Support the Bryant University Car Show and connect with our community. Pick a garage, then send your inquiry.
             </p>
-            <p className="mt-6 text-[15px] text-bryant-stone">
+            <p className="mt-4 text-[15px] text-bryant-mist">
               Prefer email?{' '}
-              <a href={`mailto:${EMAIL}`} className="u-static font-medium text-bryant-gold-deep hover:text-bryant-ink">{EMAIL}</a>
+              <a href={`mailto:${EMAIL}`} className="u-static font-semibold text-bryant-gold-pale hover:text-white">{EMAIL}</a>
             </p>
           </Reveal>
 
-          <div className="lg:col-span-7">
-            <FormCard minH="min-h-[600px]">
-              {status === 'done' ? (
+          <div className="lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
+            <div className="t-label flex items-center justify-between gap-4 text-[11px]">
+              <span className="text-bryant-label">Pit lane · 6 garages</span>
+              <span className="text-right text-bryant-gold-light" aria-live="polite">{chosen ? `Garage open · ${chosen.label}` : 'Tap a garage'}</span>
+            </div>
+            <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-3.5" aria-label="Sponsorship levels">
+              {sponsorLevels.map((l, i) => {
+                const open = l.value === data.sponsorshipLevel;
+                return (
+                  <Reveal as="li" key={l.value} delay={i * 60} className="flex flex-col">
+                    <button
+                      type="button"
+                      className={`garage h-[210px] sm:h-[270px] lg:h-[300px] ${open ? 'is-open' : ''}`}
+                      aria-pressed={open ? 'true' : 'false'}
+                      aria-label={`Garage ${i + 1}: ${l.label}`}
+                      onClick={() => toggleLevel(l.value)}
+                      disabled={done}
+                    >
+                      <span className="flex h-12 flex-none items-center gap-2.5 border-b-[3px] border-bryant-gold-light bg-bryant-carbon px-3 sm:h-14 sm:gap-3 sm:px-4">
+                        <span className="text-[20px] font-black italic text-bryant-gold-light sm:text-[26px]">{pad2(i + 1)}</span>
+                        <span className="truncate text-[11px] font-extrabold uppercase tracking-[.16em] [font-stretch:112%] sm:text-[12px]">{l.short}</span>
+                      </span>
+                      <span className="relative block flex-1 overflow-hidden">
+                        <span className="garage-interior">
+                          <span className="t-label text-[10px] text-bryant-gold-pale">Level of interest</span>
+                          <span className="t-display text-[26px] leading-[.9] sm:text-[32px]">{l.label}</span>
+                        </span>
+                        <span className="garage-door" aria-hidden="true"><i></i></span>
+                      </span>
+                    </button>
+                    <span className="pitlane" aria-hidden="true"></span>
+                  </Reveal>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2">
+            <Reveal className="chamfer-tr border border-[#222] bg-[#111] p-5 sm:p-8">
+              {done ? (
                 <SuccessState
+                  kicker="Partnership"
                   title="Inquiry Submitted!"
                   body="Thank you for your interest. We'll contact you soon to discuss partnership opportunities."
+                  minH="min-h-[460px]"
                 />
               ) : (
                 <form onSubmit={submit} aria-labelledby="sponsors-title">
-                  <fieldset className="m-0 border-0 p-0">
-                    <FieldsetLegend>01 — Company</FieldsetLegend>
+                  <div className="grid grid-cols-1 gap-5">
                     <Field id="sp-company" name="companyName" label="Company Name" required autoComplete="organization" value={data.companyName} onChange={onChange} />
-                  </fieldset>
-
-                  <fieldset className="m-0 mt-12 border-0 p-0">
-                    <FieldsetLegend>02 — Contact</FieldsetLegend>
-                    <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                       <Field id="sp-contact" name="contactName" label="Contact Name" required autoComplete="name" value={data.contactName} onChange={onChange} />
                       <Field id="sp-email" name="email" type="email" label="Email" required autoComplete="email" errMsg="Please enter a valid email." value={data.email} onChange={onChange} />
                       <Field id="sp-phone" name="phone" type="tel" label="Phone" autoComplete="tel" value={data.phone} onChange={onChange} />
+                      <SelectField
+                        id="sp-level"
+                        name="sponsorshipLevel"
+                        label="Level of Interest"
+                        placeholder="Select a level"
+                        options={sponsorLevels.map((l) => ({ value: l.value, label: l.label }))}
+                        value={data.sponsorshipLevel}
+                        onChange={onChange}
+                      />
                     </div>
-                  </fieldset>
-
-                  <fieldset className="m-0 mt-12 border-0 p-0">
-                    <FieldsetLegend>03 — Sponsorship Level of Interest</FieldsetLegend>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {sponsorLevels.map((lvl) => (
-                        <RadioCard
-                          key={lvl.value}
-                          name="sponsorshipLevel"
-                          value={lvl.value}
-                          label={lvl.label}
-                          checked={data.sponsorshipLevel === lvl.value}
-                          onChange={onChange}
-                          onDeselect={clearLevel}
-                        />
-                      ))}
-                    </div>
-                    {data.sponsorshipLevel && (
-                      <button type="button" onClick={clearLevel} className="u-link mt-3 min-h-[44px] text-[14px] font-medium text-bryant-stone hover:text-bryant-ink">
-                        Clear selection
-                      </button>
-                    )}
-                  </fieldset>
-
-                  <fieldset className="m-0 mt-12 border-0 p-0">
-                    <FieldsetLegend>04 — Message</FieldsetLegend>
                     <Field
                       id="sp-message"
                       name="message"
@@ -1313,12 +1550,11 @@ function Sponsors({ data, setData }) {
                       value={data.message}
                       onChange={onChange}
                     />
-                  </fieldset>
-
+                  </div>
                   <SubmitButton status={status} label="Submit inquiry" />
                 </form>
               )}
-            </FormCard>
+            </Reveal>
           </div>
         </div>
       </div>
@@ -1340,18 +1576,19 @@ function Footer({ footerRef }) {
   const linkCls = 'u-link min-h-[44px] text-[15px] text-white';
 
   return (
-    <footer ref={footerRef} className="bg-black pb-28 pt-24 text-white md:pb-10">
-      <div className="wrap">
+    <footer ref={footerRef} className="bg-black pb-28 text-bryant-bone md:pb-10">
+      <div className="checker h-3" aria-hidden="true"></div>
+      <div className="wrap pt-20">
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
-            <BrandLockup size={48} sub="Car Club" lazy />
+            <BrandLockup size={48} lazy />
             <p className="mt-6 max-w-[40ch] text-[15px] leading-relaxed text-bryant-mist">
               Celebrating automotive excellence and bringing together the Bryant community through our shared passion for cars.
             </p>
           </div>
 
           <div>
-            <h2 className="font-mono text-[12px] font-medium uppercase tracking-[.16em] text-bryant-gold-light">Visit</h2>
+            <h2 className="t-label text-bryant-gold-light">Visit</h2>
             <address className="mt-5 text-[15px] not-italic leading-relaxed text-bryant-mist">
               Bryant University<br />
               1150 Douglas Pike<br />
@@ -1360,7 +1597,7 @@ function Footer({ footerRef }) {
           </div>
 
           <div>
-            <h2 className="font-mono text-[12px] font-medium uppercase tracking-[.16em] text-bryant-gold-light">Connect</h2>
+            <h2 className="t-label text-bryant-gold-light">Connect</h2>
             <ul className="mt-3">
               <li>
                 <a href={`mailto:${EMAIL}`} className={`${linkCls} gap-2.5`}>
@@ -1379,7 +1616,7 @@ function Footer({ footerRef }) {
           </div>
 
           <nav aria-label="Footer">
-            <h2 className="font-mono text-[12px] font-medium uppercase tracking-[.16em] text-bryant-gold-light">Navigate</h2>
+            <h2 className="t-label text-bryant-gold-light">Navigate</h2>
             <ul className="mt-3 grid grid-cols-2 gap-x-6 lg:grid-cols-1">
               {MENU_LINKS.map((link) => (
                 <li key={link.id}>
@@ -1390,23 +1627,23 @@ function Footer({ footerRef }) {
           </nav>
         </div>
 
-        <div className="mt-20 border-t border-bryant-gold pt-8" aria-hidden="true">
-          <svg className="wordmark select-none" viewBox="0 0 1000 112" preserveAspectRatio="xMidYMid meet" focusable="false">
+        <div className="mt-20 border-t-2 border-bryant-gold-light pt-8" aria-hidden="true">
+          <svg className="wordmark select-none" viewBox="0 0 1000 120" preserveAspectRatio="xMidYMid meet" focusable="false">
             <defs>
               <linearGradient id="wm-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#B39A5A" stopOpacity=".55" />
+                <stop offset="0" stopColor="#B39A5A" stopOpacity=".6" />
                 <stop offset="1" stopColor="#826E38" stopOpacity=".08" />
               </linearGradient>
             </defs>
-            <text x="0" y="86" fontSize="108" textLength="1000" lengthAdjust="spacingAndGlyphs" fill="url(#wm-grad)">
-              Bryant Car Show 2027
+            <text x="0" y="100" fontSize="128" textLength="976" lengthAdjust="spacingAndGlyphs" fill="url(#wm-grad)">
+              BRYANT CAR SHOW 2027
             </text>
           </svg>
         </div>
 
-        <div className="mt-10 flex flex-col justify-between gap-4 border-t border-white/10 pt-6 font-mono text-[12px] tracking-[.08em] text-bryant-mist sm:flex-row sm:items-center">
+        <div className="mt-10 flex flex-col justify-between gap-4 border-t border-white/10 pt-6 text-[13px] tracking-[.04em] text-bryant-mist sm:flex-row sm:items-center">
           <p>© 2027 Bryant University Car Club. Est. 2026. All rights reserved.</p>
-          <button type="button" onClick={backToTop} className="u-link min-h-[44px] self-start uppercase tracking-[.14em] text-bryant-mist transition-colors duration-200 hover:text-white sm:self-auto">
+          <button type="button" onClick={backToTop} className="u-link t-label min-h-[44px] self-start text-[11px] text-bryant-mist transition-colors duration-200 hover:text-white sm:self-auto">
             Back to top ↑
           </button>
         </div>
@@ -1437,9 +1674,9 @@ function MobileCTABar({ formsVisible, menuOpen }) {
       style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', transform: show ? 'translateY(0)' : 'translateY(110%)' }}
       aria-hidden={show ? undefined : 'true'}
     >
-      <a href="#register" tabIndex={show ? 0 : -1} className="btn btn-gold h-12 flex-1">
+      <a href="#register" tabIndex={show ? 0 : -1} className="btn btn-gold chamfer-sm h-12 flex-1">
         Register
-        <ArrowIcon />
+        <Arrow />
       </a>
       <a href="#sponsors" tabIndex={show ? 0 : -1} className="btn btn-ghost h-12 flex-1">
         Sponsor
@@ -1520,7 +1757,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black font-sans text-white">
+    <div className="min-h-screen bg-bryant-night font-sans text-white">
       <SkipLink />
       <ScrollProgress />
       <Nav active={active} menuOpen={menuOpen} onToggle={toggleMenu} toggleRef={toggleRef} />
@@ -1528,8 +1765,8 @@ function App() {
 
       <main id="main" ref={mainRef} tabIndex={-1}>
         <Hero />
-        <SpecStrip />
         <About />
+        <Cluster />
         <GroundRules />
         <ImageBand />
         <Schedule />
