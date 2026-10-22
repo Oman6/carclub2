@@ -1,0 +1,34 @@
+# Bryant University Car Show 2027
+
+Website for the car show hosted by the Bryant University Car Club.
+
+## Where things live
+
+| What | File |
+|---|---|
+| Page sections and text | `src/app.jsx` |
+| Show schedule (times) | the `schedule` list near the top of `src/app.jsx` |
+| Styles | `src/styles.css` (plus Tailwind classes in `src/app.jsx`) |
+| Logo, favicon | `images/` |
+| Fonts (Archivo, SIL Open Font License) | `fonts/` |
+
+`app.js` and `styles.css` in the top folder are **generated**. Don't edit them by hand.
+
+## After making a change
+
+You need [Node.js](https://nodejs.org) once. Then, in this folder:
+
+```
+npm install      # first time only
+npm run build    # rebuilds app.js and styles.css
+```
+
+Commit the rebuilt `app.js`, `styles.css` and `index.html` together with your edits, then push.
+
+## Preview on your computer
+
+```
+python -m http.server 8000
+```
+
+Then open http://localhost:8000. Do a hard refresh (Ctrl+Shift+R) if you don't see your change.
