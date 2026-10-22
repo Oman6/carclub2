@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://hips.hearstapps.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <script src="https://unpkg.com/react@17.0.2/umd/react.production.min.js"></script>
@@ -54,11 +54,11 @@
                         }
                     },
                     fontFamily: {
-                        display: ['"Inter Tight"', 'Inter', 'system-ui', 'sans-serif'],
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        inter: ['Inter', 'system-ui', 'sans-serif'],
-                        serif: ['"Instrument Serif"', 'Georgia', 'serif'],
-                        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace']
+                        display: ['Archivo', 'system-ui', 'sans-serif'],
+                        sans: ['Archivo', 'system-ui', 'sans-serif'],
+                        inter: ['Archivo', 'system-ui', 'sans-serif'],
+                        serif: ['Archivo', 'system-ui', 'sans-serif'],
+                        mono: ['Archivo', 'system-ui', 'sans-serif']
                     },
                     transitionTimingFunction: {
                         lux: 'cubic-bezier(.2,.7,.2,1)',
@@ -95,7 +95,7 @@
             margin: 0;
             background: #000;
             overflow-x: clip;
-            font-family: Inter, system-ui, sans-serif;
+            font-family: "Archivo", system-ui, sans-serif;
             font-size: 17px;
             line-height: 1.65;
         }
@@ -114,21 +114,21 @@
         @media (min-width: 1024px) { .wrap { padding-left: 48px; padding-right: 48px; } }
 
         /* Type scale */
-        .t-h1 { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 600; font-size: clamp(3rem, 9vw, 9rem); line-height: .92; letter-spacing: -0.045em; }
+        .t-h1 { font-family: "Archivo", system-ui, sans-serif; font-weight: 700; font-stretch: 108%; font-size: clamp(2.75rem, 8.4vw, 8.25rem); line-height: .94; letter-spacing: -0.035em; }
         @media (max-width: 389px) { .t-h1 { font-size: 12.4vw; } }
-        .t-h2 { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 600; font-size: clamp(2.25rem, 5.5vw, 5rem); line-height: 1; letter-spacing: -0.035em; text-wrap: balance; }
-        .t-h3 { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 500; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15; letter-spacing: -0.02em; }
-        .t-stat { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 300; font-size: clamp(3rem, 7vw, 6rem); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-        .t-lead { font-family: Inter, system-ui, sans-serif; font-weight: 400; font-size: 1.25rem; line-height: 1.5; max-width: 56ch; text-wrap: pretty; }
+        .t-h2 { font-family: "Archivo", system-ui, sans-serif; font-weight: 650; font-stretch: 104%; font-size: clamp(2.25rem, 5.5vw, 5rem); line-height: 1; letter-spacing: -0.035em; text-wrap: balance; }
+        .t-h3 { font-family: "Archivo", system-ui, sans-serif; font-weight: 600; font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15; letter-spacing: -0.02em; }
+        .t-stat { font-family: "Archivo", system-ui, sans-serif; font-weight: 300; font-stretch: 110%; font-size: clamp(3rem, 7vw, 6rem); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+        .t-lead { font-family: "Archivo", system-ui, sans-serif; font-weight: 400; font-size: 1.25rem; line-height: 1.5; max-width: 56ch; text-wrap: pretty; }
         @media (min-width: 768px) { .t-lead { font-size: 1.5rem; } }
-        .t-eyebrow { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .16em; }
-        .t-mono-label { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .14em; }
-        .t-time { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 13px; letter-spacing: .08em; }
-        .serif-accent { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; letter-spacing: -0.02em; padding-right: .04em; }
+        .t-eyebrow { font-family: "Archivo", system-ui, sans-serif; font-weight: 600; font-stretch: 112%; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .2em; }
+        .t-mono-label { font-family: "Archivo", system-ui, sans-serif; font-weight: 600; font-stretch: 112%; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .16em; }
+        .t-time { font-family: "Archivo", system-ui, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+        .serif-accent { font-style: normal; }
         .prose-62 { max-width: 62ch; }
 
         /* Buttons */
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 0; font-family: Inter, system-ui, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: -0.005em; line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 250ms var(--snap), border-color 250ms var(--snap), color 200ms var(--snap), transform 150ms var(--snap); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 0; font-family: "Archivo", system-ui, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: -0.005em; line-height: 1; white-space: nowrap; cursor: pointer; transition: background-color 250ms var(--snap), border-color 250ms var(--snap), color 200ms var(--snap), transform 150ms var(--snap); }
         .btn:active { transform: scale(.98); }
         .btn .arrow { transition: transform 250ms var(--snap); }
         .btn:hover .arrow { transform: translateX(4px); }
@@ -209,9 +209,9 @@
         .cat-row:hover .cat-sweep, .cat-row:focus-visible .cat-sweep { transform: scaleX(1); }
 
         /* Forms */
-        .f-label { display: block; font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 500; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .14em; color: var(--stone); margin-bottom: 4px; }
+        .f-label { display: block; font-family: "Archivo", system-ui, sans-serif; font-weight: 500; font-size: 12px; line-height: 1.4; text-transform: uppercase; letter-spacing: .14em; color: var(--stone); margin-bottom: 4px; }
         @media (min-width: 768px) { .t-eyebrow, .t-mono-label, .f-label { font-size: 13px; } }
-        .field { display: block; width: 100%; height: 44px; padding: 0; background: transparent; color: var(--ink); font-family: Inter, system-ui, sans-serif; font-size: 16px; border: 0; border-bottom: 1px solid var(--control-line); border-radius: 0; -webkit-appearance: none; appearance: none; transition: border-color 200ms var(--snap), box-shadow 200ms var(--snap); }
+        .field { display: block; width: 100%; height: 44px; padding: 0; background: transparent; color: var(--ink); font-family: "Archivo", system-ui, sans-serif; font-size: 16px; border: 0; border-bottom: 1px solid var(--control-line); border-radius: 0; -webkit-appearance: none; appearance: none; transition: border-color 200ms var(--snap), box-shadow 200ms var(--snap); }
         .field-area { height: auto; min-height: 120px; padding-top: 12px; padding-bottom: 12px; resize: vertical; line-height: 1.5; }
         .field::placeholder { color: #767676; opacity: 1; }
         .field:focus { border-bottom-color: var(--gold); box-shadow: inset 0 -1px 0 var(--gold); }
@@ -232,14 +232,14 @@
 
         /* Footer wordmark (SVG, sized to its container) */
         .wordmark { display: block; width: 100%; height: auto; overflow: visible; }
-        .wordmark text { font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 700; letter-spacing: -0.025em; }
+        .wordmark text { font-family: "Archivo", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.025em; }
 
         /* Image band */
         .band-img { filter: grayscale(.35) contrast(1.05) saturate(.8); }
 
         /* Boot screen (replaced by React) */
         .boot { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; justify-content: center; background: #000; }
-        .boot-mark { width: 56px; height: 56px; border-radius: 9999px; border: 1px solid #B39A5A; display: flex; align-items: center; justify-content: center; font-family: "Inter Tight", Inter, system-ui, sans-serif; font-weight: 600; font-size: 25px; color: #B39A5A; animation: fadeIn 600ms ease both; }
+        .boot-mark { width: 56px; height: 56px; border-radius: 9999px; border: 1px solid #B39A5A; display: flex; align-items: center; justify-content: center; font-family: "Archivo", system-ui, sans-serif; font-weight: 600; font-size: 25px; color: #B39A5A; animation: fadeIn 600ms ease both; }
 
         @media print {
             .reveal { opacity: 1 !important; transform: none !important; }
@@ -252,7 +252,7 @@
 </head>
 <body class="bg-black text-white antialiased">
     <div id="root"><div class="boot" aria-label="Loading"><div class="boot-mark">B</div></div></div>
-    <noscript><p style="color:#fff;text-align:center;padding:24px;font-family:Inter,system-ui,sans-serif">This site requires JavaScript.</p></noscript>
+    <noscript><p style="color:#fff;text-align:center;padding:24px;font-family:Archivo,system-ui,sans-serif">This site requires JavaScript.</p></noscript>
     <script type="text/babel" src="app.js"></script>
 </body>
 </html>
