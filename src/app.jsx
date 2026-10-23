@@ -93,22 +93,59 @@ const HERO_FACTS = [
   { k: 'Admission', v: 'Free for Bryant students & staff · $5 general' }
 ];
 
-const NAV_LINKS = [
-  { id: 'about', label: 'About' },
-  { id: 'rules', label: 'Rules' },
-  { id: 'schedule', label: 'Schedule' },
-  { id: 'categories', label: 'Categories' },
-  { id: 'sponsors', label: 'Sponsors' }
+/* Club */
+const CLUB_FACTS = [
+  { k: 'Founded', v: '2026' },
+  { k: 'Home', v: 'Bryant University · Smithfield, RI' },
+  { k: 'Members', v: 'Bryant University students' },
+  { k: 'Flagship event', v: 'Bryant University Car Show · April 2027' },
+  { k: 'Instagram', v: IG_HANDLE, href: IG_URL }
 ];
 
-const MENU_LINKS = [
-  { id: 'about', label: 'About' },
-  { id: 'rules', label: 'Rules' },
-  { id: 'schedule', label: 'Schedule' },
-  { id: 'categories', label: 'Categories' },
-  { id: 'register', label: 'Register' },
-  { id: 'sponsors', label: 'Sponsors' }
+// Club meets for the season calendar (the car show is always shown first). Add one per meet, e.g.
+// { name: 'Cars & Coffee', date: 'Nov 8', where: 'Bryant University campus', note: 'Bring your ride.' }
+const meets = [];
+
+// Graduating classes currently at Bryant (rolls over each June).
+const CLASS_YEARS = (() => {
+  const now = new Date();
+  const first = now.getFullYear() + (now.getMonth() >= 5 ? 1 : 0);
+  return [0, 1, 2, 3].map((i) => String(first + i));
+})();
+
+// Sections that belong to the car show, so "Car Show 2027" stays highlighted in the nav while you're in any of them.
+const SHOW_SECTIONS = ['show', 'about', 'numbers', 'rules', 'schedule', 'categories', 'register'];
+
+const NAV_LINKS = [
+  { id: 'club', label: 'Club', match: ['club'] },
+  { id: 'meets', label: 'Meets & Events', match: ['meets'] },
+  { id: 'show', label: 'Car Show 2027', match: SHOW_SECTIONS },
+  { id: 'sponsors', label: 'Sponsors', match: ['sponsors'] }
 ];
+
+const MENU_GROUPS = [
+  {
+    title: 'The club',
+    links: [
+      { id: 'club', label: 'About the club' },
+      { id: 'meets', label: 'Meets & events' },
+      { id: 'join', label: 'Join the club' }
+    ]
+  },
+  {
+    title: 'Car Show 2027',
+    links: [
+      { id: 'show', label: 'The show' },
+      { id: 'rules', label: 'Rules' },
+      { id: 'schedule', label: 'Schedule' },
+      { id: 'categories', label: 'Categories' },
+      { id: 'register', label: 'Register' },
+      { id: 'sponsors', label: 'Sponsors' }
+    ]
+  }
+];
+
+const MENU_LINKS = [].concat(...MENU_GROUPS.map((g) => g.links));
 
 const EMPTY_REG = {
   firstName: '', lastName: '', email: '', phone: '',
@@ -120,6 +157,8 @@ const EMPTY_SPONSOR = {
   companyName: '', contactName: '', email: '', phone: '',
   sponsorshipLevel: '', message: ''
 };
+
+const EMPTY_JOIN = { firstName: '', lastName: '', email: '', classYear: '', car: '' };
 
 const REDUCED = typeof window !== 'undefined' && !!window.matchMedia &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -238,7 +277,7 @@ function useActiveSection(ids) {
       });
       setFormsVisible(visible.size > 0);
     }, { threshold: 0 });
-    ['register', 'sponsors'].forEach((id) => {
+    ['join', 'register', 'sponsors'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) io2.observe(el);
     });
@@ -604,7 +643,7 @@ function Nav({ active, menuOpen, onToggle, toggleRef }) {
               key={link.id}
               href={`#${link.id}`}
               className="nav-link t-nav py-2"
-              aria-current={active === link.id ? 'true' : undefined}
+              aria-current={link.match.indexOf(active) !== -1 ? 'true' : undefined}
             >
               {link.label}
               <span className="nav-u" aria-hidden="true"></span>
@@ -613,8 +652,8 @@ function Nav({ active, menuOpen, onToggle, toggleRef }) {
         </nav>
 
         <div className="flex flex-none items-center gap-2 md:gap-6">
-          <a href="#register" className="btn btn-gold chamfer-sm hidden h-11 px-5 text-[12px] tracking-[.16em] sm:inline-flex">
-            Register
+          <a href="#join" className="btn btn-gold chamfer-sm hidden h-11 px-5 text-[12px] tracking-[.16em] sm:inline-flex">
+            Join the club
           </a>
           <button
             ref={toggleRef}
@@ -677,21 +716,29 @@ function MobileMenu({ open, onClose, toggleRef }) {
       className="menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bryant-night px-4 pb-10 pt-24 md:hidden"
     >
       <nav aria-label="Mobile">
-        <ul>
-          {MENU_LINKS.map((link, i) => (
-            <li key={link.id} className="menu-item border-b border-white/10" style={{ animationDelay: `${60 + i * 40}ms` }}>
-              <a
-                ref={i === 0 ? firstRef : undefined}
-                href={`#${link.id}`}
-                onClick={() => onClose(false)}
-                className="flex items-baseline gap-4 py-4"
-              >
-                <span className="text-[13px] font-black italic text-bryant-gold-light">{pad2(i + 1)}</span>
-                <span className="t-display text-[44px] text-white">{link.label}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+        {MENU_GROUPS.map((group, g) => (
+          <div key={group.title} className={g ? 'mt-8' : ''}>
+            <p className="t-label menu-item mb-1 text-[11px] text-bryant-gold-light" style={{ animationDelay: `${40 + g * 120}ms` }}>{group.title}</p>
+            <ul>
+              {group.links.map((link) => {
+                const i = MENU_LINKS.indexOf(link);
+                return (
+                  <li key={link.id} className="menu-item border-b border-white/10" style={{ animationDelay: `${60 + i * 35}ms` }}>
+                    <a
+                      ref={i === 0 ? firstRef : undefined}
+                      href={`#${link.id}`}
+                      onClick={() => onClose(false)}
+                      className="flex items-baseline gap-4 py-3"
+                    >
+                      <span className="text-[13px] font-black italic text-bryant-gold-light">{pad2(i + 1)}</span>
+                      <span className="t-display text-[36px] text-white">{link.label}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
       <div className="menu-item mt-auto pt-10" style={{ animationDelay: `${60 + MENU_LINKS.length * 40}ms` }}>
         <div className="checker-sm mb-6 h-3 w-24" aria-hidden="true"></div>
@@ -714,10 +761,380 @@ function MobileMenu({ open, onClose, toggleRef }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Hero: lights out                                                    */
+/* Club home: the badge on the racing stripes                          */
 /* ------------------------------------------------------------------ */
 
-function Hero() {
+function ClubHero() {
+  const mediaRef = useRef(null);
+  const [imgOk, setImgOk] = useState(true);
+
+  useScroll(({ y, vh }) => {
+    if (!PARALLAX || y > vh * 1.2) return;
+    if (mediaRef.current) mediaRef.current.style.transform = `translate3d(0, ${(y * 0.2).toFixed(1)}px, 0)`;
+  });
+
+  const nextUp = [
+    { k: 'Flagship event', v: 'Bryant University Car Show' },
+    { k: 'Date', v: EVENT_DATE },
+    { k: 'Where', v: 'Bryant University Campus, Smithfield, RI' }
+  ];
+
+  return (
+    <section
+      id="top"
+      aria-labelledby="club-title"
+      className="relative isolate flex flex-col overflow-hidden bg-bryant-night text-bryant-bone"
+      style={{ minHeight: 'max(680px, 100svh)' }}
+    >
+      <div ref={mediaRef} className={`absolute inset-0 -z-30 ${PARALLAX ? 'will-change-transform' : ''}`} aria-hidden="true">
+        {imgOk && (
+          <img
+            src={heroSrc(1600)}
+            srcSet={HERO_SRCSET}
+            sizes={HERO_SIZES}
+            alt=""
+            className="club-hero-img h-full w-full object-cover"
+            decoding="async"
+            onError={() => setImgOk(false)}
+          />
+        )}
+      </div>
+      <div className="club-shade absolute inset-0 -z-20" aria-hidden="true"></div>
+
+      <div className="stripes" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <div className="badge-roundel">
+          <span className="badge-halo"></span>
+          <SafeImg src={LOGO_IMG} alt="" className="relative h-full w-full object-contain" fallback={<Monogram size={330} />} />
+        </div>
+      </div>
+
+      <div className="wrap pt-16 md:pt-20">
+        <div className="pinstripe" aria-hidden="true"></div>
+      </div>
+
+      <div className="wrap flex flex-1 flex-col pb-8 pr-[56px] pt-8 md:pr-[72px] md:pt-12 xl:pr-12">
+        <div className="fade-up flex items-center gap-4">
+          <span className="club-badge-inline" aria-hidden="true">
+            <SafeImg src={LOGO_IMG} alt="" className="h-full w-full object-contain" fallback={<Monogram size={64} />} />
+          </span>
+          <p className="t-label text-bryant-gold-light">Student car club · Bryant University · Est. 2026</p>
+        </div>
+
+        <h1 id="club-title" className="t-display club-h1 fade-up mt-6 sm:mt-7" style={{ animationDelay: '120ms' }}>
+          Bryant{' '}<br /><span className="text-bryant-gold-light">Car Club</span>
+        </h1>
+
+        <p className="t-lead fade-up mt-6 max-w-[46ch] text-bryant-smoke" style={{ animationDelay: '220ms' }}>
+          The student car club at Bryant University. Classics, muscle, exotics, motorcycles, EVs — if it has an engine (or a battery), it belongs here. We bring car people together and host the Bryant University Car Show.
+        </p>
+
+        <div className="fade-up mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center" style={{ animationDelay: '320ms' }}>
+          <a href="#join" className="btn btn-gold chamfer h-14 px-7 sm:h-[58px] sm:px-8">
+            Join the club
+            <Arrow />
+          </a>
+          <a href="#show" className="btn btn-ghost h-14 px-7 sm:h-[58px]">
+            Car Show 2027
+          </a>
+        </div>
+
+        <div className="fade-up mt-auto pt-10 sm:pt-12" style={{ animationDelay: '420ms' }}>
+          <div className="flex flex-col lg:h-[60px] lg:flex-row lg:items-stretch">
+            <div className="flex h-14 flex-none items-stretch lg:h-auto">
+              <span className="checker w-14 flex-none lg:w-[60px]" aria-hidden="true"></span>
+              <span
+                className="flex items-center bg-bryant-gold-light pl-5 pr-9 text-[17px] font-black italic text-bryant-ink"
+                style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 18px) 100%, 0 100%)' }}
+              >
+                NEXT UP
+              </span>
+            </div>
+            <div className="flex flex-col gap-4 border border-bryant-line bg-[rgba(10,10,10,.88)] p-4 sm:p-5 lg:-ml-[18px] lg:flex-1 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:border-l-0 lg:py-0 lg:pl-9 lg:pr-7">
+              <dl className="grid grid-cols-2 gap-x-5 gap-y-4 lg:flex lg:flex-1 lg:items-center lg:justify-between lg:gap-6">
+                {nextUp.map((f, i) => (
+                  <div key={f.k} className={`min-w-0 ${i === 0 ? 'col-span-2 lg:col-span-1' : ''}`}>
+                    <dt className="text-[10px] font-semibold uppercase tracking-[.22em] text-bryant-gold-light [font-stretch:112%]">{f.k}</dt>
+                    <dd className="mt-1 text-[14px] font-bold leading-snug text-bryant-bone sm:text-[15px]">{f.v}</dd>
+                  </div>
+                ))}
+              </dl>
+              <a href="#show" className="inline-flex min-h-[44px] flex-none items-center gap-2 self-start border-b-2 border-bryant-gold-light text-[12px] font-extrabold uppercase tracking-[.16em] text-bryant-bone [font-stretch:112%] lg:self-center">
+                Show details
+                <Arrow className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Club: about (spec sheet), meets (season calendar), join             */
+/* ------------------------------------------------------------------ */
+
+function ClubAbout() {
+  return (
+    <section id="club" aria-labelledby="club-about-title" className="on-light relative isolate overflow-hidden bg-bryant-bone py-16 text-bryant-ink sm:py-24 md:py-32">
+      <SafeImg
+        src={LOGO_IMG}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+        className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[520px] w-[520px] opacity-[.06] grayscale"
+        fallback={null}
+      />
+      <div className="wrap">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-16">
+          <Reveal className="flex flex-col gap-6 lg:col-span-5">
+            <Eyebrow index="01" tone="light">The Club</Eyebrow>
+            <h2 id="club-about-title" className="t-display t-h2">
+              Built by{' '}<br /><span className="text-bryant-gold-deep">Bryant students.</span>
+            </h2>
+            <p className="max-w-[52ch] text-[18px] leading-[1.6] text-[#2B2822]">
+              The Bryant Car Club is a student club at Bryant University, founded in 2026 for students who are into cars — whatever you drive, or dream of driving. It's where Bryant's car people meet, and it's the crew behind the Bryant University Car Show.
+            </p>
+            <div className="mt-2 flex flex-col gap-3 lg:mt-auto">
+              <p className="t-label text-[11px] text-bryant-gold-deep">Every kind of car</p>
+              <ul className="flex flex-wrap gap-2" aria-label="Kinds of cars in the club">
+                {categories.map((c) => (
+                  <li key={c.value} className="rounded-[5px] bg-bryant-ink px-2.5 py-1.5 text-[16px] font-extrabold tracking-[.06em] text-bryant-gold-pale shadow-[inset_0_0_0_2px_#B39A5A] [font-stretch:78%] sm:text-[18px]">
+                    <span aria-hidden="true">{c.code}</span>
+                    <span className="sr-only">{c.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+
+          <Reveal delay={100} className="lg:col-span-7">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b-[3px] border-bryant-ink pb-3">
+              <p className="t-display leading-none" style={{ fontSize: 'clamp(2rem, 5vw, 2.75rem)' }}>Specifications</p>
+              <p className="t-label text-[11px] text-bryant-gold-deep">Bryant Car Club · Model year 2026</p>
+            </div>
+            <dl>
+              {CLUB_FACTS.map((f, i) => (
+                <div
+                  key={f.k}
+                  className={`grid grid-cols-1 gap-1 py-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-baseline sm:gap-4 sm:py-5 ${i === CLUB_FACTS.length - 1 ? 'border-b-[3px] border-bryant-ink' : 'border-b border-[#CFC8B6]'}`}
+                >
+                  <dt className="t-label text-[11px] text-bryant-gold-deep">{f.k}</dt>
+                  <dd className="text-[22px] font-extrabold leading-snug tracking-[-0.01em] sm:text-[26px]">
+                    {f.href ? (
+                      <a className="u-static hover:text-bryant-gold-deep" href={f.href} target="_blank" rel="noopener noreferrer">
+                        {f.v}
+                        <span className="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    ) : f.v}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ClubMeets() {
+  const hasMeets = meets.length > 0;
+  return (
+    <section id="meets" aria-labelledby="meets-title" className="relative isolate overflow-hidden bg-bryant-night py-16 text-bryant-bone sm:py-24 md:py-32">
+      <div className="speedlines absolute -right-32 -top-20 -z-10 h-[1100px] w-[760px]" aria-hidden="true"></div>
+      <div className="wrap">
+        <Reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <Eyebrow index="02">Meets &amp; Events</Eyebrow>
+            <h2 id="meets-title" className="t-display t-h2 mt-4">
+              The <span className="text-bryant-gold-light">season.</span>
+            </h2>
+          </div>
+          <p className="max-w-[38ch] text-[17px] leading-relaxed text-bryant-smoke">
+            Club meets and the big show, round by round. Follow {IG_HANDLE} for the latest dates.
+          </p>
+        </Reveal>
+
+        <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Upcoming events">
+          <Reveal as="li" className={hasMeets ? 'sm:col-span-2' : 'sm:col-span-2 lg:col-span-4'}>
+            <article className="chamfer-tr relative flex h-full min-h-[300px] flex-col justify-between gap-6 overflow-hidden bg-bryant-gold-light p-6 text-bryant-ink sm:p-7">
+              <span className="meet-checker" aria-hidden="true"></span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="t-label text-[12px]">Flagship event</span>
+                <span className="t-label bg-bryant-ink px-2.5 py-1.5 text-[10px] text-bryant-gold-pale">Coming soon</span>
+              </div>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-7">
+                <div className="flex h-[112px] w-[112px] flex-none flex-col items-center justify-center bg-bryant-ink text-bryant-bone sm:h-[132px] sm:w-[132px]" aria-hidden="true">
+                  <span className="t-label text-[12px] text-bryant-gold-light">April</span>
+                  <span className="t-display text-[54px] sm:text-[64px]">2027</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h3 className="t-display leading-[.88]" style={{ fontSize: 'clamp(2.4rem, 6vw, 3.5rem)' }}>
+                    Bryant University{' '}<br />Car Show
+                  </h3>
+                  <p className="text-[16px] font-semibold">{EVENT_DATE} · Bryant University Campus, Smithfield, RI</p>
+                </div>
+              </div>
+              <a
+                href="#show"
+                className="inline-flex min-h-[44px] items-center gap-2 self-start border-b-2 border-bryant-ink text-[12px] font-extrabold uppercase tracking-[.16em] [font-stretch:112%] focus-visible:outline-bryant-ink"
+              >
+                Show details &amp; registration
+                <Arrow className="h-3.5 w-3.5" />
+              </a>
+            </article>
+          </Reveal>
+          {meets.map((m, i) => (
+            <Reveal as="li" key={`${m.name}-${i}`} delay={(i + 1) * 60}>
+              <article className="flex h-full min-h-[300px] flex-col justify-between gap-5 border border-bryant-line bg-[rgba(22,22,22,.9)] p-6">
+                <span className="t-label text-[12px] text-bryant-gold-light">Round {pad2(i + 1)}</span>
+                <div className="flex flex-col gap-2.5">
+                  <p className="t-display text-[44px] leading-[.9]">{m.date}</p>
+                  <h3 className="text-[20px] font-extrabold">{m.name}</h3>
+                  <p className="text-[15px] text-bryant-mist">{m.where}</p>
+                </div>
+                {m.note && <p className="text-[14px] leading-snug text-bryant-mist">{m.note}</p>}
+              </article>
+            </Reveal>
+          ))}
+        </ul>
+
+        <Reveal className="mt-4 flex flex-col gap-4 border border-bryant-line bg-[rgba(10,10,10,.9)] p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-center gap-4">
+            <InstagramIcon size={28} className="text-bryant-gold-light" />
+            <div>
+              <p className="t-label text-[11px] text-bryant-gold-light">Never miss a meet</p>
+              <p className="text-[20px] font-extrabold">{IG_HANDLE}</p>
+            </div>
+          </div>
+          <a href={IG_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ghost h-12 self-start px-6 text-[12px] sm:self-auto">
+            Follow on Instagram
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* The member spot that fills in live as someone types the join form */
+function ReservedSpot({ name, classYear, car, welcome }) {
+  const label = welcome
+    ? `Reserved member parking sign: welcome, ${name || 'new member'}`
+    : `Reserved member parking sign for ${name || 'you'}${classYear ? `, class of ${classYear}` : ''}`;
+  return (
+    <div className="parking asphalt" role="img" aria-label={label}>
+      <span className="parking-glow" aria-hidden="true"></span>
+      <span className="reserved-post" aria-hidden="true"></span>
+      <span className="bay-line bay-left" aria-hidden="true"></span>
+      <span className="bay-line bay-right" aria-hidden="true"></span>
+      <span className="bay-line bay-back" aria-hidden="true"></span>
+      <div className="reserved-sign" aria-hidden="true">
+        <SafeImg src={LOGO_IMG} alt="" loading="lazy" className="h-12 w-12 sm:h-14 sm:w-14" fallback={<Monogram size={52} />} />
+        <span className="t-display text-[34px] leading-[.9] text-bryant-gold-deep sm:text-[40px]">{welcome ? 'Welcome' : 'Reserved'}</span>
+        <span className="t-label text-[10px] sm:text-[11px]">Member parking</span>
+        <span className="reserved-name">{name || 'Your name'}</span>
+        <span className="t-label text-[11px] text-bryant-stone">{classYear ? `Class of ${classYear}` : 'Class of ____'}</span>
+      </div>
+      <p className={`bay-paint ${car ? 'text-[#E9E4D8]' : 'text-[#4A453B]'}`} aria-hidden="true">{car || 'Your car here'}</p>
+      <p className="t-label absolute inset-x-0 bottom-5 text-center text-[11px] text-bryant-label" aria-hidden="true">Bryant Car Club · Est. 2026</p>
+    </div>
+  );
+}
+
+function ClubJoin({ data, setData }) {
+  const [status, submit] = useSubmitFlow(() => setData(EMPTY_JOIN));
+  useRefocusAfterReset(status, 'join-firstName');
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const done = status === 'done';
+  const name = [data.firstName, data.lastName].map((v) => v.trim()).filter(Boolean).join(' ');
+
+  return (
+    <section id="join" aria-labelledby="join-title" className="relative isolate bg-bryant-night py-16 text-bryant-bone sm:py-24 md:py-32">
+      <div className="checker-sm absolute inset-x-0 top-0 h-3" aria-hidden="true"></div>
+      <div className="wrap">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-x-14">
+          <div className="lg:col-span-6">
+            <Reveal>
+              <Eyebrow index="03">Join the Club</Eyebrow>
+              <h2 id="join-title" className="t-display t-h2 mt-4">
+                Claim{' '}<br /><span className="text-bryant-gold-light">your spot.</span>
+              </h2>
+              <p className="t-lead mt-6 text-bryant-smoke">
+                Membership is open to Bryant University students. Fill this in and the club will reach out about joining.
+              </p>
+            </Reveal>
+
+            <Reveal delay={100} className="mt-8">
+              {done ? (
+                <SuccessState
+                  kicker="You're on the list"
+                  title="Welcome to the club."
+                  body="Thanks for signing up. The club will reach out about joining."
+                  minH="min-h-[320px]"
+                />
+              ) : (
+                <form onSubmit={submit} aria-labelledby="join-title" className="flex flex-col gap-5">
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <Field id="join-firstName" name="firstName" label="First Name" required autoComplete="given-name" value={data.firstName} onChange={onChange} />
+                    <Field id="join-lastName" name="lastName" label="Last Name" required autoComplete="family-name" value={data.lastName} onChange={onChange} />
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_170px]">
+                    <Field
+                      id="join-email"
+                      name="email"
+                      type="email"
+                      label="Bryant Email"
+                      required
+                      autoComplete="email"
+                      placeholder="you@bryant.edu"
+                      pattern="[^@\s]+@bryant\.edu"
+                      errMsg="Use your @bryant.edu email."
+                      value={data.email}
+                      onChange={onChange}
+                    />
+                    <SelectField
+                      id="join-classYear"
+                      name="classYear"
+                      label="Class Of"
+                      required
+                      placeholder="Year"
+                      errMsg="Pick your class year."
+                      options={CLASS_YEARS.map((y) => ({ value: y, label: y }))}
+                      value={data.classYear}
+                      onChange={onChange}
+                    />
+                  </div>
+                  <Field id="join-car" name="car" label="What do you drive? (optional)" placeholder="e.g. 2006 Mazda Miata" value={data.car} onChange={onChange} />
+                  <SubmitButton status={status} label="Join the club" />
+                </form>
+              )}
+            </Reveal>
+          </div>
+
+          <Reveal delay={150} className="lg:col-span-6">
+            <ReservedSpot name={name} classYear={data.classYear} car={data.car.trim()} welcome={done} />
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Car Show 2027: lights out                                           */
+/* ------------------------------------------------------------------ */
+
+function ShowHero() {
   const mediaRef = useRef(null);
   const [imgOk, setImgOk] = useState(true);
 
@@ -728,8 +1145,8 @@ function Hero() {
 
   return (
     <section
-      id="top"
-      aria-labelledby="hero-title"
+      id="show"
+      aria-labelledby="show-title"
       className="relative isolate flex flex-col overflow-hidden bg-bryant-night text-bryant-bone"
       style={{ minHeight: 'max(700px, 100svh)' }}
     >
@@ -771,10 +1188,10 @@ function Hero() {
           </div>
         </div>
 
-        <h1 id="hero-title" className="t-display t-h1 fade-up mt-6 sm:mt-7" style={{ animationDelay: '120ms' }}>
+        <h2 id="show-title" className="t-display t-h1 fade-up mt-6 sm:mt-7" style={{ animationDelay: '120ms' }}>
           Bryant{' '}<br />University{' '}<br /><span className="text-bryant-gold-light">Car Show</span>
           <span className="sr-only"> 2027</span>
-        </h1>
+        </h2>
 
         <p className="t-lead fade-up mt-6 max-w-[46ch] text-bryant-smoke" style={{ animationDelay: '220ms' }}>
           Join the Bryant community for our premier automotive showcase — a day celebrating automotive design, engineering, and the passion that drives us forward.
@@ -869,7 +1286,7 @@ function About() {
       <div className="wrap">
         <div className="grid grid-cols-1 gap-y-10 lg:grid-cols-12 lg:gap-x-8">
           <Reveal className="lg:col-span-6">
-            <Eyebrow index="01" tone="light">About the Event</Eyebrow>
+            <Eyebrow index="04" tone="light">About the Event</Eyebrow>
             <h2 id="about-title" className="t-display t-h2 mt-4">
               A celebration of automotive <span className="text-bryant-gold-deep">innovation.</span>
             </h2>
@@ -969,7 +1386,7 @@ function Cluster() {
       <div className="wrap">
         <Reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <Eyebrow index="02">Instrument Cluster</Eyebrow>
+            <Eyebrow index="05">Instrument Cluster</Eyebrow>
             <h2 id="numbers-title" className="t-display t-h2 mt-4">Expected on the lawn</h2>
           </div>
           <p className="max-w-[32ch] text-[16px] leading-relaxed text-bryant-mist">
@@ -1079,7 +1496,7 @@ function GroundRules() {
       <div className="wrap">
         <div className="flex items-start justify-between gap-10">
           <Reveal className="max-w-[780px]">
-            <Eyebrow index="03">Ground Rules</Eyebrow>
+            <Eyebrow index="06">Ground Rules</Eyebrow>
             <h2 id="rules-title" className="t-display t-h2 mt-4">
               Drive slow.{' '}<br /><span className="text-bryant-gold-light">Be aware.</span>
             </h2>
@@ -1180,7 +1597,7 @@ function Schedule() {
       <div className="wrap">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-12">
           <Reveal className="self-start lg:sticky lg:top-28 lg:col-span-5">
-            <Eyebrow index="04">Schedule</Eyebrow>
+            <Eyebrow index="07">Schedule</Eyebrow>
             <h2 id="schedule-title" className="t-display t-h2 mt-4">
               Show day,{' '}<br /><span className="text-bryant-gold-light">lap by lap.</span>
             </h2>
@@ -1290,7 +1707,7 @@ function Categories({ onPick }) {
       <div className="wrap">
         <Reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <Eyebrow index="05">Vehicle Categories</Eyebrow>
+            <Eyebrow index="08">Vehicle Categories</Eyebrow>
             <h2 id="categories-title" className="t-display t-h2 mt-4">
               Pick your <span className="text-bryant-gold-light">plate.</span>
             </h2>
@@ -1379,7 +1796,7 @@ function Register({ data, setData, flash, finishRef }) {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-14">
           <div className="flex flex-col lg:col-span-5">
             <Reveal>
-              <Eyebrow index="06">Vehicle Registration</Eyebrow>
+              <Eyebrow index="09">Vehicle Registration</Eyebrow>
               <h2 id="register-title" className="t-display t-h2 mt-4">
                 Enter{' '}<br /><span className="text-bryant-gold-light">the show.</span>
               </h2>
@@ -1502,7 +1919,7 @@ function Sponsors({ data, setData }) {
       <div className="wrap">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-14">
           <Reveal className="lg:col-span-5 lg:col-start-1 lg:row-start-1">
-            <Eyebrow index="07">Sponsorship</Eyebrow>
+            <Eyebrow index="10">Sponsorship</Eyebrow>
             <h2 id="sponsors-title" className="t-display t-h2 mt-4">
               Partner with{' '}<br /><span className="text-bryant-gold-light">the show.</span>
             </h2>
@@ -1713,12 +2130,11 @@ function MobileCTABar({ formsVisible, menuOpen }) {
       style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', transform: show ? 'translateY(0)' : 'translateY(110%)' }}
       aria-hidden={show ? undefined : 'true'}
     >
-      <a href="#register" tabIndex={show ? 0 : -1} className="btn btn-gold chamfer-sm h-12 flex-1">
-        Register
-        <Arrow />
+      <a href="#join" tabIndex={show ? 0 : -1} className="btn btn-gold chamfer-sm h-12 flex-1 text-[12px] tracking-[.1em]">
+        Join the club
       </a>
-      <a href="#sponsors" tabIndex={show ? 0 : -1} className="btn btn-ghost h-12 flex-1">
-        Sponsor
+      <a href="#register" tabIndex={show ? 0 : -1} className="btn btn-ghost h-12 flex-1 text-[12px] tracking-[.1em]">
+        Register a car
       </a>
     </div>
   );
@@ -1731,6 +2147,7 @@ function MobileCTABar({ formsVisible, menuOpen }) {
 function App() {
   const [formData, setFormData] = useState(EMPTY_REG);
   const [sponsorData, setSponsorData] = useState(EMPTY_SPONSOR);
+  const [joinData, setJoinData] = useState(EMPTY_JOIN);
   const [menuOpen, setMenuOpen] = useState(false);
   const [flash, setFlash] = useState(null);
   const toggleRef = useRef(null);
@@ -1740,7 +2157,7 @@ function App() {
   const flashTimer = useRef(null);
   const focusTimer = useRef(null);
 
-  const { active, formsVisible } = useActiveSection(['about', 'rules', 'schedule', 'categories', 'register', 'sponsors']);
+  const { active, formsVisible } = useActiveSection(['club', 'meets', 'join'].concat(SHOW_SECTIONS, ['sponsors']));
 
   const closeMenu = useCallback((returnFocus) => {
     setMenuOpen(false);
@@ -1803,7 +2220,11 @@ function App() {
       <MobileMenu open={menuOpen} onClose={closeMenu} toggleRef={toggleRef} />
 
       <main id="main" ref={mainRef} tabIndex={-1}>
-        <Hero />
+        <ClubHero />
+        <ClubAbout />
+        <ClubMeets />
+        <ClubJoin data={joinData} setData={setJoinData} />
+        <ShowHero />
         <About />
         <Cluster />
         <GroundRules />

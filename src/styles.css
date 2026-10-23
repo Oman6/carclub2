@@ -147,6 +147,37 @@ a, button { -webkit-tap-highlight-color: rgba(179,154,90,.25); }
 .roundel-tag { font-weight: 600; font-stretch: 115%; font-size: 11px; letter-spacing: .3em; color: #6B5A2C; }
 .roundel-num { font-weight: 900; font-style: italic; font-stretch: 85%; font-size: 196px; line-height: .9; letter-spacing: -0.06em; color: var(--ink); padding-right: 10px; }
 
+/* Club home */
+.club-hero-img { animation: heroSettle 2400ms var(--lux) both; transform-origin: 60% 40%; opacity: .28; filter: grayscale(.6) contrast(1.15) brightness(.8); }
+.club-shade { background: linear-gradient(115deg, transparent 0 52%, rgba(255,255,255,.05) 58%, transparent 66%), linear-gradient(90deg, #070707 0%, rgba(7,7,7,.92) 45%, rgba(7,7,7,.55) 75%, rgba(7,7,7,.75) 100%), linear-gradient(180deg, rgba(7,7,7,.5) 0%, rgba(7,7,7,0) 30%, rgba(7,7,7,0) 65%, #070707 100%); }
+.club-h1 { font-size: clamp(4rem, 18vw, 11.5rem); line-height: .82; }
+.club-badge-inline { display: block; width: 64px; height: 64px; flex: none; filter: drop-shadow(0 8px 20px rgba(0,0,0,.6)); }
+@media (min-width: 768px) { .club-badge-inline { width: 88px; height: 88px; } }
+@media (min-width: 1280px) { .club-badge-inline { display: none; } }
+.badge-roundel { display: none; }
+@media (min-width: 1280px) {
+    .badge-roundel { display: block; position: absolute; left: 50%; top: clamp(130px, 22%, 230px); transform: translateX(-50%); width: 330px; height: 330px; filter: drop-shadow(0 30px 60px rgba(0,0,0,.7)); }
+}
+.badge-halo { position: absolute; inset: -90px; border-radius: 50%; background: radial-gradient(closest-side, rgba(179,154,90,.45), rgba(179,154,90,0)); animation: halo 4s ease-in-out infinite; }
+@keyframes halo { 0%, 100% { opacity: .55; } 50% { opacity: .9; } }
+
+/* Meets: flagship card */
+.meet-checker { position: absolute; right: 0; bottom: 0; width: 120px; height: 120px; pointer-events: none; opacity: .18; background: repeating-conic-gradient(#0A0A0A 0 25%, transparent 0 50%) 0 0 / 24px 24px; }
+
+/* Join: reserved member parking that fills in as you type */
+.parking { position: relative; isolation: isolate; overflow: hidden; height: 560px; }
+@media (min-width: 1024px) { .parking { height: 100%; min-height: 660px; } }
+.parking-glow { position: absolute; inset: 0; z-index: -1; background: radial-gradient(70% 60% at 50% 30%, rgba(179,154,90,.16), rgba(14,14,14,0) 70%); }
+.reserved-post { position: absolute; left: 50%; top: 22%; bottom: 40%; width: 14px; transform: translateX(-50%); background: linear-gradient(90deg, #555, #999 50%, #555); }
+.bay-line { position: absolute; background: #E9E4D8; }
+.bay-left, .bay-right { top: 60%; bottom: -10px; width: 10px; }
+.bay-left { left: 12%; }
+.bay-right { right: 12%; }
+.bay-back { left: 12%; right: 12%; top: 60%; height: 10px; }
+.reserved-sign { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); width: min(320px, 80%); box-sizing: border-box; padding: 16px 18px; background: var(--bone); color: var(--ink); border: 6px solid var(--ink); box-shadow: 0 0 0 3px var(--gold-light), 0 30px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.reserved-name { margin-top: 4px; width: 100%; padding-top: 8px; border-top: 2px solid var(--ink); font-weight: 900; font-stretch: 85%; font-size: 26px; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
+.bay-paint { position: absolute; left: 12%; right: 12%; top: calc(60% + 16px); bottom: 44px; margin: 0; padding: 0 12px; display: flex; align-items: center; justify-content: center; text-align: center; font-style: italic; font-weight: 900; font-stretch: 72%; font-size: clamp(2rem, 6vw, 3.75rem); line-height: .9; text-transform: uppercase; overflow-wrap: anywhere; transform: perspective(600px) rotateX(38deg); transition: color 200ms var(--snap); }
+
 /* Start lights */
 .lights { display: inline-flex; gap: 6px; padding: 6px; background: #0B0B0B; border: 1px solid var(--line); --lt: 22px; }
 .lights .pod { display: flex; flex-direction: column; gap: 6px; padding: 6px; background: #141414; border-radius: 6px; }

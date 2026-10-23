@@ -1,12 +1,14 @@
-# Bryant University Car Show 2027
+# Bryant Car Club
 
-Website for the car show hosted by the Bryant University Car Club.
+Website for the Bryant University student car club, and its flagship event, the Bryant University Car Show 2027.
 
 ## Where things live
 
 | What | File |
 |---|---|
 | Page sections and text | `src/app.jsx` |
+| Club meets & events | the `meets` list near the top of `src/app.jsx` (one line per meet) |
+| Club facts (spec sheet) | the `CLUB_FACTS` list near the top of `src/app.jsx` |
 | Show schedule (times) | the `schedule` list near the top of `src/app.jsx` |
 | Styles | `src/styles.css` (plus Tailwind classes in `src/app.jsx`) |
 | Logo, favicon | `images/` |
