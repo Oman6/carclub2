@@ -7,8 +7,10 @@ Website for the Bryant University student car club, and its flagship event, the 
 | What | File |
 |---|---|
 | Page sections and text | `src/app.jsx` |
-| Club meets & events | the `meets` list near the top of `src/app.jsx` (one line per meet) |
-| Club facts (spec sheet) | the `CLUB_FACTS` list near the top of `src/app.jsx` |
+| Club meets & events | the `meets` list near the top of `src/app.jsx` (one line per meet, date as `YYYY-MM-DD`); each meet shows up as a stop on the season road |
+| Show month on the season road | `SHOW_MONTH` near the top of `src/app.jsx` |
+| Club facts (the VIN plate) | the `CLUB_VIN` list near the top of `src/app.jsx` |
+| Sponsor garage cars and their photo credits | `GARAGE_CARS` in `src/app.jsx`, photos in `images/garage/` (the footer credits are required by the photo licenses) |
 | Show schedule (times) | the `schedule` list near the top of `src/app.jsx` |
 | Styles | `src/styles.css` (plus Tailwind classes in `src/app.jsx`) |
 | Logo, favicon | `images/` |

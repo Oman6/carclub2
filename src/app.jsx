@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 
 /* ------------------------------------------------------------------ */
@@ -86,6 +86,22 @@ const sponsorLevels = [
   { label: 'Other/Discuss', short: 'Other', value: 'other' }
 ];
 
+// Supercars parked in the sponsor pit garages, one per garage. Photos from Wikimedia Commons
+// (cropped and resized); the footer credits each photographer, as their licenses require.
+const GARAGE_CARS = [
+  { src: 'images/garage/lamborghini.webp', car: 'Lamborghini Huracán Tecnica', by: 'MrWalkr', license: 'CC BY-SA 4.0', file: '2022_Lamborghini_Huracan_Tecnica_Front.jpg' },
+  { src: 'images/garage/ferrari.webp', car: 'Ferrari LaFerrari', by: 'Yanko Malinov', license: 'CC BY-SA 4.0', file: 'LaFerrari_front.jpg' },
+  { src: 'images/garage/mclaren.webp', car: 'McLaren P1', by: 'Clément Bucco-Lechat', license: 'CC BY-SA 3.0', file: 'Geneva_MotorShow_2013_-_McLaren_P1_front.jpg' },
+  { src: 'images/garage/bugatti.webp', car: 'Bugatti Chiron', by: 'Norbert Aepli', license: 'CC BY 4.0', file: '2018-03-06_Geneva_Motor_Show_2259.JPG' },
+  { src: 'images/garage/porsche.webp', car: 'Porsche 918 Spyder', by: 'Rijin', license: 'CC BY-SA 4.0', file: 'Frankfurt_Motor_Show_2015_(43).JPG' },
+  { src: 'images/garage/koenigsegg.webp', car: 'Koenigsegg Jesko', by: 'Alexander-93', license: 'CC BY-SA 4.0', file: 'Koenigsegg_Jesko_Auto_Zuerich_2023_1X7A1382.jpg' }
+];
+const LICENSE_URLS = {
+  'CC BY-SA 4.0': 'https://creativecommons.org/licenses/by-sa/4.0/',
+  'CC BY-SA 3.0': 'https://creativecommons.org/licenses/by-sa/3.0/',
+  'CC BY 4.0': 'https://creativecommons.org/licenses/by/4.0/'
+};
+
 const HERO_FACTS = [
   { k: 'Registration', v: timeOf('REG'), num: true },
   { k: 'Gates open', v: timeOf('GTS'), num: true },
@@ -94,17 +110,29 @@ const HERO_FACTS = [
 ];
 
 /* Club */
-const CLUB_FACTS = [
-  { k: 'Founded', v: '2026' },
-  { k: 'Home', v: 'Bryant University · Smithfield, RI' },
-  { k: 'Members', v: 'Bryant University students' },
-  { k: 'Flagship event', v: 'Bryant University Car Show · April 2027' },
-  { k: 'Instagram', v: IG_HANDLE, href: IG_URL }
+// The club's "VIN" on the About plate: tap a part to decode it. Every part decodes to a real club fact,
+// and 4 is the true check digit for this 17-character VIN.
+const CLUB_VIN = [
+  { id: 'wmi', chars: 'BRY', pos: '01–03', short: 'Make', field: 'World manufacturer', value: 'Bryant University', detail: 'A student club at Bryant University, built by Bryant students.' },
+  { id: 'vds', chars: 'CCSTU', pos: '04–08', short: 'Model', field: 'Vehicle descriptor', value: 'Car Club, student-run', detail: 'Membership is open to Bryant University students.' },
+  { id: 'chk', chars: '4', pos: '09', short: 'Check', field: 'Check digit', value: 'Every kind of car', detail: 'If it has an engine (or a battery), it belongs here. Run the math: 4 really is the check digit for this VIN.' },
+  { id: 'yr', chars: 'T', pos: '10', short: 'Year', field: 'Model year', value: '2026', detail: 'Founded in 2026. In a real VIN, the letter T is the model-year code for 2026.' },
+  { id: 'plt', chars: 'S', pos: '11', short: 'Plant', field: 'Assembly plant', value: 'Smithfield, RI', detail: "Home base is Bryant University's campus in Smithfield, Rhode Island." },
+  { id: 'ser', chars: 'CS2027', pos: '12–17', short: 'Serial', field: 'Serial number', value: 'Car Show 2027', detail: 'Our flagship event: the Bryant University Car Show, coming April 2027.' }
 ];
+const CLUB_VIN_TEXT = CLUB_VIN.map((s) => s.chars).join('');
 
-// Club meets for the season calendar (the car show is always shown first). Add one per meet, e.g.
-// { name: 'Cars & Coffee', date: 'Nov 8', where: 'Bryant University campus', note: 'Bring your ride.' }
+// Club meets: each one becomes a stop on the season road. Add one per meet (date as YYYY-MM-DD), e.g.
+// { name: 'Cars & Coffee', date: '2026-11-08', where: 'Bryant University campus' }
 const meets = [];
+
+// The season road runs from September to the show month. Change SHOW_MONTH if the show date moves.
+const SHOW_MONTH = { year: 2027, month: 3 }; // April 2027 (January is 0)
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const SEASON = Array.from({ length: SHOW_MONTH.month + 5 }, (_, i) => {
+  const d = new Date(SHOW_MONTH.year - 1, 8 + i, 1);
+  return { year: d.getFullYear(), month: d.getMonth() };
+});
 
 // Graduating classes currently at Bryant (rolls over each June).
 const CLASS_YEARS = (() => {
@@ -117,7 +145,7 @@ const CLASS_YEARS = (() => {
 const SHOW_SECTIONS = ['show', 'about', 'numbers', 'rules', 'schedule', 'categories', 'register'];
 
 const NAV_LINKS = [
-  { id: 'club', label: 'Club', match: ['club'] },
+  { id: 'club', label: 'Club', match: ['club', 'join'] },
   { id: 'meets', label: 'Meets & Events', match: ['meets'] },
   { id: 'show', label: 'Car Show 2027', match: SHOW_SECTIONS },
   { id: 'sponsors', label: 'Sponsors', match: ['sponsors'] }
@@ -215,6 +243,24 @@ function useScroll(fn) {
   useEffect(() => scrollStore.subscribe((s) => ref.current(s)), []);
 }
 
+// True while a media query matches, e.g. useMedia('(min-width: 1024px)').
+function useMedia(query) {
+  const [match, setMatch] = useState(() => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(query).matches);
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const mq = window.matchMedia(query);
+    const onChange = () => setMatch(mq.matches);
+    onChange();
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange);
+      else mq.removeListener(onChange);
+    };
+  }, [query]);
+  return match;
+}
+
 /* ------------------------------------------------------------------ */
 /* Hooks                                                               */
 /* ------------------------------------------------------------------ */
@@ -291,7 +337,7 @@ function useActiveSection(ids) {
   return { active, formsVisible };
 }
 
-function useSubmitFlow(onReset) {
+function useSubmitFlow(onReset, holdMs = 3000) {
   const [status, setStatus] = useState('idle'); // idle | submitting | done
   const statusRef = useRef('idle');
   const timers = useRef([]);
@@ -314,7 +360,7 @@ function useSubmitFlow(onReset) {
       timers.current.push(setTimeout(() => {
         resetRef.current();
         set('idle');
-      }, 3000));
+      }, holdMs));
     }, 600));
   };
 
@@ -499,14 +545,14 @@ function FormLegend({ children }) {
   return <legend className="t-label mb-5 p-0 text-bryant-gold-light">{children}</legend>;
 }
 
-function SubmitButton({ status, label, busyLabel = 'Submitting' }) {
+function SubmitButton({ status, label, busyLabel = 'Submitting', className = 'mt-9' }) {
   const busy = status === 'submitting';
   return (
     <button
       type="submit"
       disabled={busy}
       aria-busy={busy ? 'true' : 'false'}
-      className="btn btn-gold chamfer mt-9 h-[60px] w-full"
+      className={`btn btn-gold chamfer h-[60px] w-full ${className}`}
     >
       {busy ? (
         <React.Fragment>
@@ -637,12 +683,12 @@ function Nav({ active, menuOpen, onToggle, toggleRef }) {
           <BrandLockup />
         </a>
 
-        <nav aria-label="Primary" className="hidden items-center gap-6 md:flex lg:gap-9">
+        <nav aria-label="Primary" className="hidden items-center gap-9 xl:flex">
           {NAV_LINKS.map((link) => (
             <a
               key={link.id}
               href={`#${link.id}`}
-              className="nav-link t-nav py-2"
+              className="nav-link t-nav whitespace-nowrap py-2"
               aria-current={link.match.indexOf(active) !== -1 ? 'true' : undefined}
             >
               {link.label}
@@ -662,7 +708,7 @@ function Nav({ active, menuOpen, onToggle, toggleRef }) {
             aria-expanded={menuOpen ? 'true' : 'false'}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            className="-mr-2 inline-flex h-11 w-11 items-center justify-center text-white md:hidden"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center text-white xl:hidden"
           >
             {menuOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
           </button>
@@ -713,7 +759,7 @@ function MobileMenu({ open, onClose, toggleRef }) {
       id="mobile-menu"
       ref={menuRef}
       onBlur={onBlur}
-      className="menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bryant-night px-4 pb-10 pt-24 md:hidden"
+      className="menu-in fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bryant-night px-4 pb-10 pt-24 xl:hidden"
     >
       <nav aria-label="Mobile">
         {MENU_GROUPS.map((group, g) => (
@@ -761,12 +807,129 @@ function MobileMenu({ open, onClose, toggleRef }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Club home: the badge on the racing stripes                          */
+/* Club home: the gold wheel                                          */
 /* ------------------------------------------------------------------ */
+
+const SPOKE_ANGLES = [0, 72, 144, 216, 288];
+
+/* The club wheel. The tire, rotor and spokes turn while the caliper and the badge center cap stay put.
+   It spins in on load and again on every tap; on desktop it also rolls as the page scrolls.
+   Four stacked layers (tire, caliper, spokes, cap) so the turning ones rotate on the GPU. */
+function GoldWheel({ mini = false, className = '' }) {
+  const [spins, setSpins] = useState(0);
+  const ref = useRef(null);
+
+  useScroll(({ y, vh }) => {
+    if (mini || !PARALLAX || y > vh * 1.5 || !ref.current) return;
+    ref.current.style.setProperty('--roll', `${(y * 0.3).toFixed(1)}deg`);
+  });
+
+  const spin = `wheel-spin ${spins % 2 ? 'roll-b' : 'roll-a'}`;
+  const font = 'Archivo, system-ui, sans-serif';
+
+  return (
+    <button ref={ref} type="button" className={`wheel ${className}`} onClick={() => setSpins((n) => n + 1)} aria-label="Spin the wheel">
+      <span className="wheel-shadow" aria-hidden="true"></span>
+      <span className="wheel-layer wheel-roll" aria-hidden="true">
+        <span className={spin}>
+          <svg viewBox="0 0 600 600" focusable="false">
+            <defs>
+              <radialGradient id="gw-tire" cx="300" cy="300" r="296" gradientUnits="userSpaceOnUse">
+                <stop offset=".68" stopColor="#050505" />
+                <stop offset=".74" stopColor="#171717" />
+                <stop offset=".86" stopColor="#1F1F1F" />
+                <stop offset=".95" stopColor="#121212" />
+                <stop offset="1" stopColor="#040404" />
+              </radialGradient>
+              <linearGradient id="gw-lip" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#EBDDB0" />
+                <stop offset=".45" stopColor="#B39A5A" />
+                <stop offset="1" stopColor="#6B5A2D" />
+              </linearGradient>
+              <radialGradient id="gw-rotor" cx="300" cy="300" r="162" gradientUnits="userSpaceOnUse">
+                <stop offset=".55" stopColor="#2A2A2A" />
+                <stop offset=".62" stopColor="#4A4A4A" />
+                <stop offset=".9" stopColor="#3C3C3C" />
+                <stop offset="1" stopColor="#262626" />
+              </radialGradient>
+              <linearGradient id="gw-spoke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#7D6A37" />
+                <stop offset=".5" stopColor="#D9C38A" />
+                <stop offset="1" stopColor="#7D6A37" />
+              </linearGradient>
+              <radialGradient id="gw-hub" cx="300" cy="300" r="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#E3D29E" />
+                <stop offset=".7" stopColor="#B39A5A" />
+                <stop offset="1" stopColor="#7D6A37" />
+              </radialGradient>
+              <path id="gw-arc-top" d="M 62 300 A 238 238 0 0 1 538 300" />
+              <path id="gw-arc-bot" d="M 42 300 A 258 258 0 0 0 558 300" />
+              <path id="gw-arc-cal" d="M 183.95 233 A 134 134 0 0 1 272.14 168.93" />
+            </defs>
+            <circle cx="300" cy="300" r="294" fill="url(#gw-tire)" />
+            <circle cx="300" cy="300" r="291" fill="none" stroke="#000" strokeWidth="5" opacity=".7" />
+            <circle cx="300" cy="300" r="276" fill="none" stroke="#262626" />
+            <circle cx="300" cy="300" r="220" fill="none" stroke="#262626" />
+            {!mini && (
+              <React.Fragment>
+                <text fontFamily={font} fontSize="34" fontWeight="900" fontStretch="115%" letterSpacing="7" fill="#F2EEE4">
+                  <textPath href="#gw-arc-top" startOffset="50%" textAnchor="middle">BRYANT CAR CLUB</textPath>
+                </text>
+                <text fontFamily={font} fontSize="20" fontWeight="800" fontStretch="115%" letterSpacing="6" fill="#F2EEE4" opacity=".85">
+                  <textPath href="#gw-arc-bot" startOffset="50%" textAnchor="middle">EST. 2026 · SMITHFIELD, RI</textPath>
+                </text>
+              </React.Fragment>
+            )}
+            <circle cx="300" cy="300" r="207" fill="#0B0B0B" stroke="url(#gw-lip)" strokeWidth="9" />
+            <circle cx="300" cy="300" r="198" fill="none" stroke="#000" strokeWidth="6" opacity=".6" />
+            <circle cx="300" cy="300" r="162" fill="url(#gw-rotor)" />
+            <circle cx="300" cy="300" r="128" fill="none" stroke="#151515" strokeWidth="7" strokeLinecap="round" pathLength="30" strokeDasharray="0.001 1" />
+            <circle cx="300" cy="300" r="146" fill="none" stroke="#151515" strokeWidth="7" strokeLinecap="round" pathLength="30" strokeDasharray="0.001 1" strokeDashoffset="0.5" />
+            <circle cx="300" cy="300" r="100" fill="#161616" stroke="#2C2C2C" strokeWidth="3" />
+          </svg>
+        </span>
+      </span>
+
+      <svg className="wheel-layer" viewBox="0 0 600 600" aria-hidden="true" focusable="false">
+        <path d="M144.96 221.01 A174 174 0 0 1 272.78 128.14 L282.79 191.35 A110 110 0 0 0 201.99 250.06 Z" fill="#F2EEE4" stroke="#F2EEE4" strokeWidth="18" strokeLinejoin="round" />
+        <path d="M154.81 219.52 A166 166 0 0 1 268.33 137.05" fill="none" stroke="#B39A5A" strokeWidth="3" />
+        {!mini && (
+          <text fontFamily={font} fontSize="20" fontWeight="900" fontStyle="italic" letterSpacing="1" fill="#0A0A0A">
+            <textPath href="#gw-arc-cal" startOffset="50%" textAnchor="middle">BRYANT</textPath>
+          </text>
+        )}
+      </svg>
+
+      <span className="wheel-layer wheel-roll" aria-hidden="true">
+        <span className={spin}>
+          <svg viewBox="0 0 600 600" focusable="false">
+            <circle cx="300" cy="300" r="98" fill="url(#gw-hub)" />
+            {SPOKE_ANGLES.map((a) => (
+              <g key={a} transform={`rotate(${a} 300 300)`}>
+                <path d="M281 236 L268 104 Q300 96 332 104 L319 236 Z" fill="url(#gw-spoke)" stroke="#6B5A2D" strokeWidth="1.5" />
+                <path d="M296 236 L293 108 L307 108 L304 236 Z" fill="#EBDDB0" opacity=".55" />
+              </g>
+            ))}
+            <circle cx="300" cy="300" r="80" fill="none" stroke="#0E0E0E" strokeWidth="16" strokeLinecap="round" pathLength="5" strokeDasharray="0.001 1" strokeDashoffset="-0.25" />
+            <circle cx="300" cy="300" r="80" fill="none" stroke="#D9C38A" strokeWidth="8" strokeLinecap="round" pathLength="5" strokeDasharray="0.001 1" strokeDashoffset="-0.25" />
+            <rect x="296" y="98" width="8" height="15" rx="2" fill="#2A2A2A" transform="rotate(36 300 300)" />
+          </svg>
+        </span>
+      </span>
+
+      <svg className="wheel-layer" viewBox="0 0 600 600" aria-hidden="true" focusable="false">
+        <circle cx="300" cy="300" r="64" fill="#0A0A0A" stroke="#D9C38A" strokeWidth="4" />
+        <image href={LOGO_IMG} x="242" y="242" width="116" height="116" />
+      </svg>
+    </button>
+  );
+}
 
 function ClubHero() {
   const mediaRef = useRef(null);
   const [imgOk, setImgOk] = useState(true);
+  // The big wheel needs the room beside the title; smaller screens get a small one by the label.
+  const wide = useMedia('(min-width: 1024px)');
 
   useScroll(({ y, vh }) => {
     if (!PARALLAX || y > vh * 1.2) return;
@@ -801,24 +964,26 @@ function ClubHero() {
       </div>
       <div className="club-shade absolute inset-0 -z-20" aria-hidden="true"></div>
 
-      <div className="stripes" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <div className="badge-roundel">
-          <span className="badge-halo"></span>
-          <SafeImg src={LOGO_IMG} alt="" className="relative h-full w-full object-contain" fallback={<Monogram size={330} />} />
+      {wide && (
+        <div className="hero-wheel fade-in">
+          <GoldWheel />
+          <p className="wheel-hint" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true" focusable="false">
+              <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+              <path d="M20 4v5h-5" />
+            </svg>
+            Tap to spin
+          </p>
         </div>
-      </div>
+      )}
 
       <div className="wrap pt-16 md:pt-20">
         <div className="pinstripe" aria-hidden="true"></div>
       </div>
 
-      <div className="wrap flex flex-1 flex-col pb-8 pr-[56px] pt-8 md:pr-[72px] md:pt-12 xl:pr-12">
-        <div className="fade-up flex items-center gap-4">
-          <span className="club-badge-inline" aria-hidden="true">
-            <SafeImg src={LOGO_IMG} alt="" className="h-full w-full object-contain" fallback={<Monogram size={64} />} />
-          </span>
+      <div className="wrap flex flex-1 flex-col pb-8 pt-8 md:pt-12">
+        <div className="fade-up flex items-center gap-4 sm:gap-5">
+          {!wide && <GoldWheel mini className="h-[84px] w-[84px] flex-none md:h-[112px] md:w-[112px]" />}
           <p className="t-label text-bryant-gold-light">Student car club · Bryant University · Est. 2026</p>
         </div>
 
@@ -873,10 +1038,14 @@ function ClubHero() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Club: about (spec sheet), meets (season calendar), join             */
+/* Club: about (VIN decoder), meets (season road), join (shifter)     */
 /* ------------------------------------------------------------------ */
 
 function ClubAbout() {
+  const [at, setAt] = useState(0);
+  const sel = CLUB_VIN[at];
+  const step = (d) => setAt((i) => (i + d + CLUB_VIN.length) % CLUB_VIN.length);
+
   return (
     <section id="club" aria-labelledby="club-about-title" className="on-light relative isolate overflow-hidden bg-bryant-bone py-16 text-bryant-ink sm:py-24 md:py-32">
       <SafeImg
@@ -885,64 +1054,275 @@ function ClubAbout() {
         aria-hidden="true"
         loading="lazy"
         decoding="async"
-        className="pointer-events-none absolute -bottom-40 -right-32 -z-10 h-[520px] w-[520px] opacity-[.06] grayscale"
+        className="pointer-events-none absolute -right-36 -top-44 -z-10 h-[520px] w-[520px] opacity-[.06] grayscale"
         fallback={null}
       />
       <div className="wrap">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-x-16">
-          <Reveal className="flex flex-col gap-6 lg:col-span-5">
+        <Reveal className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between xl:gap-12">
+          <div className="flex-none">
             <Eyebrow index="01" tone="light">The Club</Eyebrow>
-            <h2 id="club-about-title" className="t-display t-h2">
+            <h2 id="club-about-title" className="t-display t-h2 mt-4 xl:text-[5.5rem]">
               Built by{' '}<br /><span className="text-bryant-gold-deep">Bryant students.</span>
             </h2>
-            <p className="max-w-[52ch] text-[18px] leading-[1.6] text-[#2B2822]">
-              The Bryant Car Club is a student club at Bryant University, founded in 2026 for students who are into cars — whatever you drive, or dream of driving. It's where Bryant's car people meet, and it's the crew behind the Bryant University Car Show.
-            </p>
-            <div className="mt-2 flex flex-col gap-3 lg:mt-auto">
-              <p className="t-label text-[11px] text-bryant-gold-deep">Every kind of car</p>
-              <ul className="flex flex-wrap gap-2" aria-label="Kinds of cars in the club">
-                {categories.map((c) => (
-                  <li key={c.value} className="rounded-[5px] bg-bryant-ink px-2.5 py-1.5 text-[16px] font-extrabold tracking-[.06em] text-bryant-gold-pale shadow-[inset_0_0_0_2px_#B39A5A] [font-stretch:78%] sm:text-[18px]">
-                    <span aria-hidden="true">{c.code}</span>
-                    <span className="sr-only">{c.name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
+          </div>
+          <p className="max-w-[52ch] text-[18px] leading-[1.6] text-[#2B2822] xl:max-w-[470px]">
+            The Bryant Car Club is a student club at Bryant University, founded in 2026 for students who are into cars — whatever you drive, or dream of driving. It's where Bryant's car people meet, and it's the crew behind the Bryant University Car Show.
+          </p>
+        </Reveal>
 
-          <Reveal delay={100} className="lg:col-span-7">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b-[3px] border-bryant-ink pb-3">
-              <p className="t-display leading-none" style={{ fontSize: 'clamp(2rem, 5vw, 2.75rem)' }}>Specifications</p>
-              <p className="t-label text-[11px] text-bryant-gold-deep">Bryant Car Club · Model year 2026</p>
+        <Reveal delay={100} className="mt-10 sm:mt-14">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+            <p className="t-label text-[11px] text-bryant-gold-deep sm:text-[12px]">
+              Decode the club <span aria-hidden="true">—</span> tap any part of the VIN
+            </p>
+            <p className="t-label hidden text-[11px] text-[#8A7F66] sm:block">17 characters · 6 parts</p>
+          </div>
+
+          <div className="vin-plate mt-3">
+            {['tl', 'tr', 'bl', 'br'].map((c) => (
+              <span key={c} className={`vin-rivet ${c}`} aria-hidden="true"></span>
+            ))}
+            <div className="vin-head" aria-hidden="true">
+              <span>Vehicle identification number</span>
+              <span className="hidden md:inline">Bryant Car Club · Smithfield, RI</span>
             </div>
-            <dl>
-              {CLUB_FACTS.map((f, i) => (
-                <div
-                  key={f.k}
-                  className={`grid grid-cols-1 gap-1 py-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-baseline sm:gap-4 sm:py-5 ${i === CLUB_FACTS.length - 1 ? 'border-b-[3px] border-bryant-ink' : 'border-b border-[#CFC8B6]'}`}
-                >
-                  <dt className="t-label text-[11px] text-bryant-gold-deep">{f.k}</dt>
-                  <dd className="text-[22px] font-extrabold leading-snug tracking-[-0.01em] sm:text-[26px]">
-                    {f.href ? (
-                      <a className="u-static hover:text-bryant-gold-deep" href={f.href} target="_blank" rel="noopener noreferrer">
-                        {f.v}
-                        <span className="sr-only"> (opens in a new tab)</span>
-                      </a>
-                    ) : f.v}
-                  </dd>
-                </div>
+            <div className="vin-row" role="group" aria-label={`Club VIN ${CLUB_VIN_TEXT}`}>
+              {CLUB_VIN.map((s, i) => (
+                <React.Fragment key={s.id}>
+                  {i === 3 && <span className="vin-break" aria-hidden="true"></span>}
+                  <button type="button" className="vin-seg" aria-pressed={i === at} aria-label={`${s.chars}: ${s.field}`} onClick={() => setAt(i)}>
+                    <span className="vin-chars" aria-hidden="true">
+                      {s.chars.split('').map((c, j) => <span key={j}>{c}</span>)}
+                    </span>
+                    <span className="vin-bar" aria-hidden="true"></span>
+                    <span className="vin-tag" aria-hidden="true"><span className="vin-pos">{s.pos} · </span>{s.short}</span>
+                  </button>
+                </React.Fragment>
               ))}
-            </dl>
-          </Reveal>
-        </div>
+            </div>
+          </div>
+
+          <div className="vin-readout chamfer-tr mt-4 grid grid-cols-1 bg-bryant-ink text-bryant-bone md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)_236px]">
+            <div className="flex flex-col gap-3 border-b border-bryant-line p-6 sm:p-8 md:border-b-0 md:border-r">
+              <p className="t-label text-[11px] text-bryant-gold-light">{sel.pos.length > 2 ? 'Positions' : 'Position'} {sel.pos}</p>
+              <p key={`c-${sel.id}`} className="decoded vin-big" aria-hidden="true">{sel.chars}</p>
+              <p className="t-label mt-auto text-[12px] text-bryant-mist">{sel.field}</p>
+            </div>
+            <div className="flex flex-col gap-3 p-6 sm:p-8 md:px-10" aria-live="polite">
+              <p className="t-label text-[11px] text-bryant-gold-light">
+                Decoded<span className="sr-only">: {sel.chars}, {sel.field}</span>
+              </p>
+              <p key={`v-${sel.id}`} className="decoded t-display" style={{ fontSize: 'clamp(2.75rem, 6vw, 4.1rem)' }}>{sel.value}</p>
+              <p className="max-w-[58ch] text-[17px] leading-relaxed text-bryant-smoke sm:text-[18px]">{sel.detail}</p>
+              {sel.id === 'chk' && (
+                <ul className="mt-1 flex flex-wrap gap-2" aria-label="Kinds of cars in the club">
+                  {categories.map((c) => (
+                    <li key={c.value} className="rounded-[5px] bg-[#151515] px-2.5 py-1.5 text-[15px] font-extrabold tracking-[.06em] text-bryant-gold-pale shadow-[inset_0_0_0_2px_#B39A5A] [font-stretch:78%] sm:text-[16px]">
+                      <span aria-hidden="true">{c.code}</span>
+                      <span className="sr-only">{c.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {sel.id === 'ser' && (
+                <a href="#show" className="mt-1 inline-flex min-h-[44px] items-center gap-2 self-start border-b-2 border-bryant-gold-light text-[12px] font-extrabold uppercase tracking-[.16em] [font-stretch:112%]">
+                  Show details
+                  <Arrow className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-5 border-t border-bryant-line p-6 sm:px-8 md:col-span-2 xl:col-span-1 xl:flex-col xl:flex-nowrap xl:items-start xl:border-l xl:border-t-0 xl:py-8">
+              <div>
+                <p className="t-label text-[11px] text-bryant-gold-light">Part</p>
+                <p className="t-display text-[44px] leading-none xl:text-[48px]">
+                  {pad2(at + 1)} <span className="text-[#5A5446]">/ {pad2(CLUB_VIN.length)}</span>
+                </p>
+              </div>
+              <div className="flex gap-2.5">
+                <button type="button" className="vin-step" onClick={() => step(-1)} aria-label="Previous part">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" /></svg>
+                </button>
+                <button type="button" className="vin-step" onClick={() => step(1)} aria-label="Next part">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+              <div className="w-full sm:w-auto xl:w-full">
+                <p className="text-[10px] font-semibold uppercase tracking-[.24em] text-bryant-label [font-stretch:112%]">Registered to</p>
+                <a href={IG_URL} target="_blank" rel="noopener noreferrer" className="text-[15px] font-extrabold text-bryant-gold-pale hover:text-white">
+                  {IG_HANDLE}
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
 }
 
+// Road centerline as cubic Béziers in a 1312×360 box: a start point, then three points per curve.
+const ROAD_PTS = [[0, 252], [170, 252], [220, 130], [410, 130], [600, 130], [620, 262], [810, 262], [1000, 262], [1020, 142], [1190, 142], [1255, 142], [1292, 170], [1312, 182]];
+const ROAD_AT0 = 4; // % of the road's length where September starts
+const ROAD_MONTH = 92 / SEASON.length; // % of the road per month
+
+// Lay the road out for a box `w` wide: winding left to right, or top to bottom on phones.
+// Points sampled along it let markers sit at an exact share of its length.
+function buildRoad(w, vertical) {
+  const H = vertical ? 720 : 360;
+  const map = vertical
+    ? ([x, y]) => [106 + ((y - 130) / 132) * 40, (x / 1312) * H]
+    : ([x, y]) => [(x / 1312) * w, y];
+  const p = ROAD_PTS.map(map);
+  const f = (q) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`;
+  let d = `M ${f(p[0])}`;
+  const pts = [p[0]];
+  for (let i = 1; i + 2 < p.length; i += 3) {
+    const [a, b, c, e] = [p[i - 1], p[i], p[i + 1], p[i + 2]];
+    d += ` C ${f(b)} ${f(c)} ${f(e)}`;
+    for (let s = 1; s <= 40; s++) {
+      const t = s / 40;
+      const u = 1 - t;
+      pts.push([0, 1].map((k) => u * u * u * a[k] + 3 * u * u * t * b[k] + 3 * u * t * t * c[k] + t * t * t * e[k]));
+    }
+  }
+  const len = [0];
+  for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const last = p[p.length - 1];
+  const start = vertical ? [p[0][0], -80] : [-120, p[0][1]];
+  const end = vertical ? [last[0], H + 80] : [w + 118, last[1] + 71];
+  return { H, d, dExt: `M ${f(start)} L ${d.slice(2)} L ${f(end)}`, pts, len };
+}
+
+// Position and heading at `pct` percent of the road's length.
+function roadPoint(road, pct) {
+  const { pts, len } = road;
+  const target = len[len.length - 1] * Math.min(1, Math.max(0, pct / 100));
+  let i = 1;
+  while (i < len.length - 1 && len[i] < target) i++;
+  const [x0, y0] = pts[i - 1];
+  const [x1, y1] = pts[i];
+  const k = (target - len[i - 1]) / (len[i] - len[i - 1] || 1);
+  return { x: x0 + (x1 - x0) * k, y: y0 + (y1 - y0) * k, angle: (Math.atan2(y1 - y0, x1 - x0) * 180) / Math.PI };
+}
+
+// Where a date sits on the road (% of its length), or null outside the season.
+function seasonAt(date) {
+  const i = SEASON.findIndex((s) => s.year === date.getFullYear() && s.month === date.getMonth());
+  if (i < 0) return null;
+  const days = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return ROAD_AT0 + ROAD_MONTH * (i + (date.getDate() - 1) / days);
+}
+
+const monthsBetween = (a, b) => (b.year - a.year) * 12 + (b.month - a.month);
+
+const MEET_STOPS = meets
+  .map((m) => {
+    const [y, mo, d] = m.date.split('-').map(Number);
+    const day = new Date(y, mo - 1, d);
+    return { ...m, day, at: seasonAt(day) };
+  })
+  .filter((m) => m.at !== null);
+
+function RoadCar() {
+  return (
+    <svg viewBox="0 0 64 30" focusable="false">
+      <rect x="11" y="0" width="9" height="3" rx="1.5" fill="#050505" />
+      <rect x="44" y="0" width="9" height="3" rx="1.5" fill="#050505" />
+      <rect x="11" y="27" width="9" height="3" rx="1.5" fill="#050505" />
+      <rect x="44" y="27" width="9" height="3" rx="1.5" fill="#050505" />
+      <path d="M5 7 Q5 2.5 11 2.5 L49 2.5 Q61 3.5 62.5 11 L62.5 19 Q61 26.5 49 27.5 L11 27.5 Q5 27.5 5 23 Z" fill="#B39A5A" stroke="#6B5A2D" />
+      <rect x="5" y="11.6" width="57.5" height="2.2" fill="#0A0A0A" />
+      <rect x="5" y="16.2" width="57.5" height="2.2" fill="#0A0A0A" />
+      <path d="M37 5.5 L45 7 Q48.5 15 45 23 L37 24.5 Q39.5 15 37 5.5 Z" fill="#0A0A0A" />
+      <path d="M14 6.5 L19.5 7.5 Q18 15 19.5 22.5 L14 23.5 Q12.5 15 14 6.5 Z" fill="#0A0A0A" />
+      <rect x="59.5" y="5" width="2.5" height="4" rx="1" fill="#F2EEE4" />
+      <rect x="59.5" y="21" width="2.5" height="4" rx="1" fill="#F2EEE4" />
+      <rect x="5" y="5" width="2" height="4.5" rx="1" fill="#FF3B2F" />
+      <rect x="5" y="20.5" width="2" height="4.5" rx="1" fill="#FF3B2F" />
+      <ellipse cx="40" cy="1.8" rx="2.2" ry="1.4" fill="#8A7440" />
+      <ellipse cx="40" cy="28.2" rx="2.2" ry="1.4" fill="#8A7440" />
+    </svg>
+  );
+}
+
 function ClubMeets() {
-  const hasMeets = meets.length > 0;
+  const boxRef = useRef(null);
+  const carRef = useRef(null);
+  const carPos = useRef(null);
+  const [w, setW] = useState(0);
+  const [view, setView] = useState(-1); // -1 is today; otherwise an index into SEASON
+  const vertical = !useMedia('(min-width: 768px)');
+
+  useLayoutEffect(() => {
+    const el = boxRef.current;
+    if (!el) return undefined;
+    const measure = () => setW(el.clientWidth);
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const road = useMemo(() => (w ? buildRoad(w, vertical) : null), [w, vertical]);
+
+  const now = new Date();
+  const thisMonth = { year: now.getFullYear(), month: now.getMonth() };
+  let todayAt = seasonAt(now);
+  if (todayAt === null) todayAt = now < new Date(SEASON[0].year, SEASON[0].month, 1) ? ROAD_AT0 : ROAD_AT0 + ROAD_MONTH * SEASON.length;
+  const carAt = view < 0 ? todayAt : ROAD_AT0 + ROAD_MONTH * (view + 0.5);
+
+  // Drive the car along the road to the picked month (it snaps into place on first paint and on resize).
+  useLayoutEffect(() => {
+    const el = carRef.current;
+    if (!el || !road) return undefined;
+    const half = vertical ? 26 : 36;
+    const lane = vertical ? 5 : 9;
+    const place = (pct) => {
+      const p = roadPoint(road, pct);
+      el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) rotate(${p.angle.toFixed(1)}deg) translate(${-half}px, ${lane}px)`;
+    };
+    const from = carPos.current;
+    if (from === null || REDUCED || Math.abs(carAt - from) < 0.01) {
+      carPos.current = carAt;
+      place(carAt);
+      return undefined;
+    }
+    const t0 = performance.now();
+    let raf = 0;
+    const drive = (ts) => {
+      const t = Math.min(1, (ts - t0) / 1300);
+      const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      carPos.current = from + (carAt - from) * ease;
+      place(carPos.current);
+      if (t < 1) raf = requestAnimationFrame(drive);
+    };
+    raf = requestAnimationFrame(drive);
+    return () => cancelAnimationFrame(raf);
+  }, [road, carAt]);
+
+  const vMonth = view < 0 ? thisMonth : SEASON[view];
+  const atShow = vMonth.year === SHOW_MONTH.year && vMonth.month === SHOW_MONTH.month;
+  const monthStops = MEET_STOPS.filter((s) => s.day.getFullYear() === vMonth.year && s.day.getMonth() === vMonth.month);
+  const toShow = monthsBetween(vMonth, SHOW_MONTH);
+  const viewTitle = view < 0 ? `${MONTH_ABBR[now.getMonth()]} ${now.getDate()}` : `${MONTH_ABBR[vMonth.month]} ${vMonth.year}`;
+  let stop = 'No meets posted yet';
+  let stopSub = `Meet dates drop on Instagram first — follow ${IG_HANDLE}.`;
+  if (atShow) {
+    stop = 'Bryant University Car Show';
+    stopSub = 'Flagship event · Bryant University Campus, Smithfield, RI';
+  } else if (monthStops.length) {
+    stop = monthStops.map((s) => s.name).join(' · ');
+    stopSub = monthStops.map((s) => `${MONTH_ABBR[s.day.getMonth()]} ${s.day.getDate()}${s.where ? ` · ${s.where}` : ''}`).join(' / ');
+  }
+
+  const today = road && roadPoint(road, todayAt);
+  const flag = road && roadPoint(road, ROAD_AT0 + ROAD_MONTH * (SEASON.length - 0.5));
+
   return (
     <section id="meets" aria-labelledby="meets-title" className="relative isolate overflow-hidden bg-bryant-night py-16 text-bryant-bone sm:py-24 md:py-32">
       <div className="speedlines absolute -right-32 -top-20 -z-10 h-[1100px] w-[760px]" aria-hidden="true"></div>
@@ -954,100 +1334,273 @@ function ClubMeets() {
               The <span className="text-bryant-gold-light">season.</span>
             </h2>
           </div>
-          <p className="max-w-[38ch] text-[17px] leading-relaxed text-bryant-smoke">
-            Club meets and the big show, round by round. Follow {IG_HANDLE} for the latest dates.
+          <p className="max-w-[42ch] text-[17px] leading-relaxed text-bryant-smoke">
+            Club meets and the big show, mile by mile. Tap a month to drive there — new meet dates go up on {IG_HANDLE}.
           </p>
         </Reveal>
 
-        <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Upcoming events">
-          <Reveal as="li" className={hasMeets ? 'sm:col-span-2' : 'sm:col-span-2 lg:col-span-4'}>
-            <article className="chamfer-tr relative flex h-full min-h-[300px] flex-col justify-between gap-6 overflow-hidden bg-bryant-gold-light p-6 text-bryant-ink sm:p-7">
-              <span className="meet-checker" aria-hidden="true"></span>
-              <div className="flex items-center justify-between gap-3">
-                <span className="t-label text-[12px]">Flagship event</span>
-                <span className="t-label bg-bryant-ink px-2.5 py-1.5 text-[10px] text-bryant-gold-pale">Coming soon</span>
-              </div>
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:gap-7">
-                <div className="flex h-[112px] w-[112px] flex-none flex-col items-center justify-center bg-bryant-ink text-bryant-bone sm:h-[132px] sm:w-[132px]" aria-hidden="true">
-                  <span className="t-label text-[12px] text-bryant-gold-light">April</span>
-                  <span className="t-display text-[54px] sm:text-[64px]">2027</span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <h3 className="t-display leading-[.88]" style={{ fontSize: 'clamp(2.4rem, 6vw, 3.5rem)' }}>
-                    Bryant University{' '}<br />Car Show
-                  </h3>
-                  <p className="text-[16px] font-semibold">{EVENT_DATE} · Bryant University Campus, Smithfield, RI</p>
-                </div>
-              </div>
-              <a
-                href="#show"
-                className="inline-flex min-h-[44px] items-center gap-2 self-start border-b-2 border-bryant-ink text-[12px] font-extrabold uppercase tracking-[.16em] [font-stretch:112%] focus-visible:outline-bryant-ink"
-              >
-                Show details &amp; registration
-                <Arrow className="h-3.5 w-3.5" />
-              </a>
-            </article>
-          </Reveal>
-          {meets.map((m, i) => (
-            <Reveal as="li" key={`${m.name}-${i}`} delay={(i + 1) * 60}>
-              <article className="flex h-full min-h-[300px] flex-col justify-between gap-5 border border-bryant-line bg-[rgba(22,22,22,.9)] p-6">
-                <span className="t-label text-[12px] text-bryant-gold-light">Round {pad2(i + 1)}</span>
-                <div className="flex flex-col gap-2.5">
-                  <p className="t-display text-[44px] leading-[.9]">{m.date}</p>
-                  <h3 className="text-[20px] font-extrabold">{m.name}</h3>
-                  <p className="text-[15px] text-bryant-mist">{m.where}</p>
-                </div>
-                {m.note && <p className="text-[14px] leading-snug text-bryant-mist">{m.note}</p>}
-              </article>
-            </Reveal>
-          ))}
-        </ul>
+        <Reveal delay={100} className="mt-8 sm:mt-12">
+          <div ref={boxRef} className={`road ${vertical ? 'is-vertical' : ''}`} style={{ height: vertical ? 720 : 360 }}>
+            {road && (
+              <React.Fragment>
+                <svg width={w} height={road.H} aria-hidden="true" focusable="false">
+                  <defs>
+                    <pattern id="road-asphalt" width="7" height="7" patternUnits="userSpaceOnUse">
+                      <rect width="7" height="7" fill="#161616" />
+                      <circle cx="1.5" cy="2" r=".8" fill="#232323" />
+                      <circle cx="5" cy="5.5" r=".7" fill="#1E1E1E" />
+                    </pattern>
+                  </defs>
+                  <path d={road.dExt} fill="none" stroke="#000" strokeWidth={vertical ? 88 : 140} opacity=".5" />
+                  <path d={road.dExt} fill="none" stroke="#E9E4D8" strokeWidth={vertical ? 70 : 112} />
+                  <path d={road.dExt} fill="none" stroke="url(#road-asphalt)" strokeWidth={vertical ? 64 : 104} />
+                  <path d={road.d} fill="none" stroke="#B39A5A" strokeWidth="3" pathLength="100" strokeDasharray="1.3 1" opacity=".5" />
+                  <path d={road.d} fill="none" stroke="#D9C38A" strokeWidth="4" pathLength="100" strokeDasharray={`${todayAt.toFixed(2)} 100`} />
+                </svg>
 
-        <Reveal className="mt-4 flex flex-col gap-4 border border-bryant-line bg-[rgba(10,10,10,.9)] p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex items-center gap-4">
-            <InstagramIcon size={28} className="text-bryant-gold-light" />
-            <div>
-              <p className="t-label text-[11px] text-bryant-gold-light">Never miss a meet</p>
-              <p className="text-[20px] font-extrabold">{IG_HANDLE}</p>
+                <span
+                  className="road-flag"
+                  style={{ transform: `translate(${flag.x.toFixed(1)}px, ${flag.y.toFixed(1)}px) rotate(${flag.angle.toFixed(1)}deg) translate(${vertical ? '-7px, -35px' : '-10px, -52px'})` }}
+                  aria-hidden="true"
+                ></span>
+
+                {MEET_STOPS.map((s) => {
+                  const p = roadPoint(road, s.at);
+                  return <span key={`${s.name}-${s.date}`} className="road-stop" style={{ left: p.x, top: p.y }} aria-hidden="true"></span>;
+                })}
+
+                <span className="road-pin" style={{ left: vertical ? today.x - 37 : today.x, top: today.y }} aria-hidden="true">
+                  <i></i>
+                  <span>{vertical ? 'Today' : `Today · ${MONTH_ABBR[now.getMonth()]} ${now.getDate()}`}</span>
+                </span>
+
+                {SEASON.map((m, i) => {
+                  const p = roadPoint(road, ROAD_AT0 + ROAD_MONTH * (i + 0.5));
+                  const isShow = i === SEASON.length - 1;
+                  const count = MEET_STOPS.filter((s) => s.day.getFullYear() === m.year && s.day.getMonth() === m.month).length;
+                  const label = `${MONTH_ABBR[m.month]} ${m.year}${isShow ? ', Bryant University Car Show' : ''}${count ? `, ${count} meet${count > 1 ? 's' : ''}` : ''}`;
+                  return (
+                    <button
+                      key={`${m.year}-${m.month}`}
+                      type="button"
+                      className={`mm ${isShow ? 'is-show' : ''} ${view === i ? 'is-on' : ''}`}
+                      style={{ left: vertical ? p.x + 45 : p.x, top: p.y }}
+                      aria-pressed={view === i}
+                      aria-label={label}
+                      onClick={() => setView(i)}
+                    >
+                      <span className="mm-tag">
+                        {isShow && <span className="mm-flag" aria-hidden="true"></span>}
+                        {MONTH_ABBR[m.month]}
+                        {isShow && <span className="mm-show"> · Car show</span>}
+                      </span>
+                      <span className="mm-year">{isShow && <span className="mm-show-year">Show · </span>}{m.year}</span>
+                      <span className="mm-post" aria-hidden="true"></span>
+                    </button>
+                  );
+                })}
+
+                <span ref={carRef} className="road-car" aria-hidden="true"><RoadCar /></span>
+                <span className="road-fade road-fade-a" aria-hidden="true"></span>
+                <span className="road-fade road-fade-b" aria-hidden="true"></span>
+              </React.Fragment>
+            )}
+          </div>
+
+          <div className="trip chamfer-tr mt-6 grid grid-cols-2 border border-bryant-line bg-[#0B0B0B] md:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)_minmax(0,.9fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)_minmax(0,.9fr)_minmax(0,1.15fr)]">
+            <div className="trip-cell order-1 border-b border-r md:order-none xl:border-b-0">
+              <p className="t-label text-[11px] text-bryant-gold-light">Trip · {view < 0 ? 'Today' : 'Viewing'}</p>
+              <p className="t-display text-[32px] leading-[.95] sm:text-[46px]">{viewTitle}</p>
+            </div>
+            <div className="trip-cell order-3 col-span-2 border-b md:order-none md:col-span-1 md:border-r xl:border-b-0" aria-live="polite">
+              <p className="t-label text-[11px] text-bryant-gold-light">At this stop</p>
+              <p className="text-[20px] font-extrabold leading-snug sm:text-[22px]">
+                <span className="sr-only">{viewTitle}: </span>
+                {stop}
+              </p>
+              <p className="text-[15px] leading-relaxed text-bryant-mist">{stopSub}</p>
+              {atShow && (
+                <a href="#show" className="inline-flex min-h-[44px] items-center gap-2 self-start border-b-2 border-bryant-gold-light text-[12px] font-extrabold uppercase tracking-[.16em] [font-stretch:112%]">
+                  Show details
+                  <Arrow className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+            <div className="trip-cell order-2 border-b md:order-none xl:border-b-0 xl:border-r">
+              <p className="t-label text-[11px] text-bryant-gold-light">To the show</p>
+              <p className="t-display text-[32px] leading-[.95] sm:text-[46px]">{toShow <= 0 ? 'Arrived' : `${toShow} mo`}</p>
+            </div>
+            <div className="trip-cell order-4 col-span-2 justify-center gap-3 sm:flex-row md:order-none md:col-span-3 xl:col-span-1 xl:flex-col">
+              <a href={IG_URL} target="_blank" rel="noopener noreferrer" className="btn btn-gold chamfer-sm h-12 px-5 text-[11px] sm:flex-1 xl:flex-none">
+                <InstagramIcon size={16} />
+                Follow for meet dates
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+              <button type="button" className="btn btn-ghost h-12 px-5 text-[11px] sm:flex-1 xl:flex-none" onClick={() => setView(-1)} disabled={view < 0}>
+                Back to today
+              </button>
             </div>
           </div>
-          <a href={IG_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ghost h-12 self-start px-6 text-[12px] sm:self-auto">
-            Follow on Instagram
-            <span className="sr-only"> (opens in a new tab)</span>
-          </a>
         </Reveal>
       </div>
     </section>
   );
 }
 
-/* The member spot that fills in live as someone types the join form */
-function ReservedSpot({ name, classYear, car, welcome }) {
-  const label = welcome
-    ? `Reserved member parking sign: welcome, ${name || 'new member'}`
+const CAR_BODY = 'M40 16 Q115 0 190 16 Q218 24 220 64 L222 330 Q222 376 196 388 Q115 404 34 388 Q8 376 8 330 L10 64 Q12 24 40 16 Z';
+
+/* The member spot. The sign fills in live as someone types; on submit the car pulls in and brakes. */
+function ReservedSpot({ name, classYear, car, parked }) {
+  const [braking, setBraking] = useState(false);
+
+  useEffect(() => {
+    if (!parked) {
+      setBraking(false);
+      return undefined;
+    }
+    const on = setTimeout(() => setBraking(true), REDUCED ? 0 : 1450);
+    const off = setTimeout(() => setBraking(false), REDUCED ? 1200 : 2500);
+    return () => {
+      clearTimeout(on);
+      clearTimeout(off);
+    };
+  }, [parked]);
+
+  const label = parked
+    ? `Reserved member parking: welcome, ${name || 'new member'}`
     : `Reserved member parking sign for ${name || 'you'}${classYear ? `, class of ${classYear}` : ''}`;
+
   return (
     <div className="parking asphalt" role="img" aria-label={label}>
       <span className="parking-glow" aria-hidden="true"></span>
-      <span className="reserved-post" aria-hidden="true"></span>
       <span className="bay-line bay-left" aria-hidden="true"></span>
       <span className="bay-line bay-right" aria-hidden="true"></span>
       <span className="bay-line bay-back" aria-hidden="true"></span>
+      <SafeImg src={LOGO_IMG} alt="" loading="lazy" decoding="async" className="bay-logo" fallback={null} />
+      <span className="wheel-stop" aria-hidden="true"></span>
+      <span className="reserved-post" aria-hidden="true"></span>
       <div className="reserved-sign" aria-hidden="true">
-        <SafeImg src={LOGO_IMG} alt="" loading="lazy" className="h-12 w-12 sm:h-14 sm:w-14" fallback={<Monogram size={52} />} />
-        <span className="t-display text-[34px] leading-[.9] text-bryant-gold-deep sm:text-[40px]">{welcome ? 'Welcome' : 'Reserved'}</span>
-        <span className="t-label text-[10px] sm:text-[11px]">Member parking</span>
+        <SafeImg src={LOGO_IMG} alt="" loading="lazy" className="reserved-logo" fallback={<Monogram size={44} />} />
+        <span className="reserved-word">{parked ? 'Welcome' : 'Reserved'}</span>
+        <span className="reserved-label">Member parking</span>
         <span className="reserved-name">{name || 'Your name'}</span>
-        <span className="t-label text-[11px] text-bryant-stone">{classYear ? `Class of ${classYear}` : 'Class of ____'}</span>
+        <span className="reserved-class">{classYear ? `Class of ${classYear}` : 'Class of ____'}</span>
+      </div>
+      <div className={`park-car ${parked ? 'is-parked' : ''} ${braking ? 'is-braking' : ''}`} aria-hidden="true">
+        <svg viewBox="0 0 230 400" focusable="false">
+          <defs>
+            <linearGradient id="pk-paint" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#7D6A37" />
+              <stop offset=".28" stopColor="#C2A867" />
+              <stop offset=".5" stopColor="#DECB92" />
+              <stop offset=".72" stopColor="#C2A867" />
+              <stop offset="1" stopColor="#7D6A37" />
+            </linearGradient>
+            <radialGradient id="pk-glow">
+              <stop offset="0" stopColor="#FF3B2F" stopOpacity=".85" />
+              <stop offset="1" stopColor="#FF3B2F" stopOpacity="0" />
+            </radialGradient>
+            <clipPath id="pk-body"><path d={CAR_BODY} /></clipPath>
+          </defs>
+          <rect x="0" y="66" width="18" height="64" rx="6" fill="#050505" />
+          <rect x="212" y="66" width="18" height="64" rx="6" fill="#050505" />
+          <rect x="0" y="282" width="18" height="64" rx="6" fill="#050505" />
+          <rect x="212" y="282" width="18" height="64" rx="6" fill="#050505" />
+          <path d={CAR_BODY} fill="url(#pk-paint)" />
+          <g clipPath="url(#pk-body)">
+            <rect x="92" y="0" width="17" height="400" fill="#0A0A0A" />
+            <rect x="121" y="0" width="17" height="400" fill="#0A0A0A" />
+          </g>
+          <path d={CAR_BODY} fill="none" stroke="#6B5A2D" strokeWidth="2" />
+          <path d="M38 198 L192 198 L178 142 Q115 128 52 142 Z" fill="#0A0A0A" />
+          <path d="M58 146 Q115 136 172 146" fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="3" />
+          <path d="M48 300 L182 300 L170 342 Q115 352 60 342 Z" fill="#0A0A0A" />
+          <path d="M28 208 L38 202 L38 294 L28 288 Z" fill="#0A0A0A" />
+          <path d="M202 208 L192 202 L192 294 L202 288 Z" fill="#0A0A0A" />
+          <ellipse cx="6" cy="178" rx="9" ry="5" fill="#8A7440" />
+          <ellipse cx="224" cy="178" rx="9" ry="5" fill="#8A7440" />
+          <path d="M34 34 Q50 22 76 22 L74 35 Q52 35 38 42 Z" fill="#F2EEE4" />
+          <path d="M196 34 Q180 22 154 22 L156 35 Q178 35 192 42 Z" fill="#F2EEE4" />
+          <g className="tail-glow">
+            <ellipse cx="56" cy="384" rx="50" ry="24" fill="url(#pk-glow)" />
+            <ellipse cx="174" cy="384" rx="50" ry="24" fill="url(#pk-glow)" />
+          </g>
+          <rect className="tail" x="30" y="377" width="52" height="9" rx="4" />
+          <rect className="tail" x="148" y="377" width="52" height="9" rx="4" />
+        </svg>
       </div>
       <p className={`bay-paint ${car ? 'text-[#E9E4D8]' : 'text-[#4A453B]'}`} aria-hidden="true">{car || 'Your car here'}</p>
-      <p className="t-label absolute inset-x-0 bottom-5 text-center text-[11px] text-bryant-label" aria-hidden="true">Bryant Car Club · Est. 2026</p>
     </div>
   );
 }
 
+// Gear positions on the shifter plate (1st top-left through 4th bottom-right), and neutral.
+const GATE = [{ x: 70, y: 40 }, { x: 70, y: 130 }, { x: 190, y: 40 }, { x: 190, y: 130 }];
+const NEUTRAL = { x: 130, y: 85 };
+
+/* Class-year shifter: a gated H pattern. The gears are real radio inputs underneath,
+   so arrow keys and the browser's required-field check work as usual. */
+function ShifterGate({ value, onChange }) {
+  const [knob, setKnob] = useState(NEUTRAL);
+  const knobRef = useRef(NEUTRAL);
+  const timers = useRef([]);
+
+  // Move the knob like a real shifter: back to the neutral rail, across, then up or down into gear.
+  useEffect(() => {
+    const i = CLASS_YEARS.indexOf(value);
+    const to = i < 0 ? NEUTRAL : GATE[i];
+    const from = knobRef.current;
+    const path = [];
+    if (from.x !== to.x && from.y !== NEUTRAL.y) path.push({ x: from.x, y: NEUTRAL.y });
+    if (from.x !== to.x) path.push({ x: to.x, y: NEUTRAL.y });
+    if (to.y !== NEUTRAL.y || !path.length) path.push(to);
+    path.forEach((p, n) => {
+      timers.current.push(setTimeout(() => {
+        knobRef.current = p;
+        setKnob(p);
+      }, REDUCED ? 0 : n * 150));
+    });
+    return () => {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+    };
+  }, [value]);
+
+  return (
+    <fieldset className="gate-wrap min-w-0">
+      <legend className="lbl">
+        Class Of
+        <Required />
+      </legend>
+      <div className="gate">
+        {[[10, 10], [242, 10], [10, 152], [242, 152]].map(([x, y]) => (
+          <span key={`${x}-${y}`} className="gate-screw" style={{ left: x, top: y }} aria-hidden="true"></span>
+        ))}
+        <svg className="gate-slot" width="260" height="170" viewBox="0 0 260 170" aria-hidden="true" focusable="false">
+          <path d="M70 40 L70 130 M190 40 L190 130 M70 85 L190 85" fill="none" stroke="#B39A5A" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M70 40 L70 130 M190 40 L190 130 M70 85 L190 85" fill="none" stroke="#030303" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {CLASS_YEARS.map((year, i) => (
+          <label key={year} className={`gear ${GATE[i].x < NEUTRAL.x ? 'gear-l' : 'gear-r'} ${GATE[i].y < NEUTRAL.y ? 'gear-t' : 'gear-b'}`}>
+            <input type="radio" name="classYear" value={year} checked={value === year} onChange={onChange} required id={i === 0 ? 'join-classYear' : undefined} />
+            <span className="gear-year">{year}</span>
+          </label>
+        ))}
+        <span className="gate-knob" style={{ transform: `translate(${knob.x - 23}px, ${knob.y - 23}px)` }} aria-hidden="true">
+          <svg width="20" height="16" viewBox="0 0 20 16" aria-hidden="true" focusable="false">
+            <path d="M4 2v12M16 2v12M4 8h12" fill="none" stroke="#4A3F22" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </span>
+      </div>
+      <p className="gate-hint" aria-hidden="true">Shift into your class year</p>
+      <p className="err">Pick your class year.</p>
+    </fieldset>
+  );
+}
+
 function ClubJoin({ data, setData }) {
-  const [status, submit] = useSubmitFlow(() => setData(EMPTY_JOIN));
+  // The welcome holds a little longer here, so the car can finish parking.
+  const [status, submit] = useSubmitFlow(() => setData(EMPTY_JOIN), 6000);
   useRefocusAfterReset(status, 'join-firstName');
 
   const onChange = (e) => {
@@ -1088,41 +1641,33 @@ function ClubJoin({ data, setData }) {
                     <Field id="join-firstName" name="firstName" label="First Name" required autoComplete="given-name" value={data.firstName} onChange={onChange} />
                     <Field id="join-lastName" name="lastName" label="Last Name" required autoComplete="family-name" value={data.lastName} onChange={onChange} />
                   </div>
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-[minmax(0,1fr)_170px]">
-                    <Field
-                      id="join-email"
-                      name="email"
-                      type="email"
-                      label="Bryant Email"
-                      required
-                      autoComplete="email"
-                      placeholder="you@bryant.edu"
-                      pattern="[^@\s]+@bryant\.edu"
-                      errMsg="Use your @bryant.edu email."
-                      value={data.email}
-                      onChange={onChange}
-                    />
-                    <SelectField
-                      id="join-classYear"
-                      name="classYear"
-                      label="Class Of"
-                      required
-                      placeholder="Year"
-                      errMsg="Pick your class year."
-                      options={CLASS_YEARS.map((y) => ({ value: y, label: y }))}
-                      value={data.classYear}
-                      onChange={onChange}
-                    />
+                  <Field
+                    id="join-email"
+                    name="email"
+                    type="email"
+                    label="Bryant Email"
+                    required
+                    autoComplete="email"
+                    placeholder="you@bryant.edu"
+                    pattern="[^@\s]+@bryant\.edu"
+                    errMsg="Use your @bryant.edu email."
+                    value={data.email}
+                    onChange={onChange}
+                  />
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-[260px_minmax(0,1fr)] sm:items-end sm:gap-7">
+                    <ShifterGate value={data.classYear} onChange={onChange} />
+                    <div className="flex flex-col gap-5 sm:pb-[30px]">
+                      <Field id="join-car" name="car" label="Your car (optional)" placeholder="e.g. 2006 Mazda Miata" value={data.car} onChange={onChange} />
+                      <SubmitButton status={status} label="Join the club" className="" />
+                    </div>
                   </div>
-                  <Field id="join-car" name="car" label="What do you drive? (optional)" placeholder="e.g. 2006 Mazda Miata" value={data.car} onChange={onChange} />
-                  <SubmitButton status={status} label="Join the club" />
                 </form>
               )}
             </Reveal>
           </div>
 
           <Reveal delay={150} className="lg:col-span-6">
-            <ReservedSpot name={name} classYear={data.classYear} car={data.car.trim()} welcome={done} />
+            <ReservedSpot name={name} classYear={data.classYear} car={data.car.trim()} parked={status !== 'idle'} />
           </Reveal>
         </div>
       </div>
@@ -1956,8 +2501,11 @@ function Sponsors({ data, setData }) {
                       </span>
                       <span className="relative block flex-1 overflow-hidden">
                         <span className="garage-interior">
-                          <span className="t-label text-[10px] text-bryant-gold-pale">Level of interest</span>
-                          <span className="t-display text-[22px] leading-[.9] sm:text-[32px]">{l.label}</span>
+                          <img className="garage-car" src={GARAGE_CARS[i % GARAGE_CARS.length].src} alt="" width="640" height="400" loading="lazy" decoding="async" />
+                          <span className="garage-text">
+                            <span className="t-label text-[10px] text-bryant-gold-pale">Level of interest</span>
+                            <span className="t-display text-[22px] leading-[.9] sm:text-[32px]">{l.label.replace('/', '/\u200B')}</span>
+                          </span>
                         </span>
                         <span className="garage-door" aria-hidden="true"><i></i></span>
                       </span>
@@ -2098,11 +2646,27 @@ function Footer({ footerRef }) {
         </div>
 
         <div className="mt-10 flex flex-col justify-between gap-4 border-t border-white/10 pt-6 text-[13px] tracking-[.04em] text-bryant-mist sm:flex-row sm:items-center">
-          <p>© 2027 Bryant University Car Club. Est. 2026. All rights reserved.</p>
+          <div>
+            <p>© 2027 Bryant University Car Club. Est. 2026. All rights reserved.</p>
+            <p className="mt-1 text-bryant-label">Designed and built by Nova Technologies · Nova Wealth LLC</p>
+          </div>
           <button type="button" onClick={backToTop} className="u-link t-label min-h-[44px] self-start text-[11px] text-bryant-mist transition-colors duration-200 hover:text-white sm:self-auto">
             Back to top ↑
           </button>
         </div>
+
+        <details className="mt-2 text-[12px] text-bryant-label">
+          <summary className="u-link t-label min-h-[44px] cursor-pointer text-[11px] text-bryant-mist transition-colors duration-200 hover:text-white">Photo credits</summary>
+          <p className="mt-2 max-w-[100ch] leading-relaxed">
+            Pit garage cars, via Wikimedia Commons (cropped):{' '}
+            {GARAGE_CARS.map((c, i) => (
+              <React.Fragment key={c.file}>
+                <a className="u-static hover:text-white" href={`https://commons.wikimedia.org/wiki/File:${c.file}`}>{c.car}</a>
+                {' '}by {c.by} (<a className="u-static hover:text-white" href={LICENSE_URLS[c.license]}>{c.license}</a>){i < GARAGE_CARS.length - 1 ? '; ' : '.'}
+              </React.Fragment>
+            ))}
+          </p>
+        </details>
       </div>
     </footer>
   );
@@ -2169,10 +2733,10 @@ function App() {
     else setMenuOpen(true);
   };
 
-  // Close the mobile menu if the viewport grows past the md breakpoint.
+  // Close the menu if the viewport grows wide enough for the full nav (xl).
   useEffect(() => {
     if (!window.matchMedia) return undefined;
-    const mq = window.matchMedia('(min-width: 768px)');
+    const mq = window.matchMedia('(min-width: 1280px)');
     const onChange = (e) => { if (e.matches) setMenuOpen(false); };
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else mq.addListener(onChange);
